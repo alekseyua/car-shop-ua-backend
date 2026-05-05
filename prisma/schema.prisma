@@ -1,13 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
-  
 }
 
 datasource db {
@@ -15,125 +8,106 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-// list brands
 model Brand {
-  id Int @id @default(autoincrement())
-  mark String @unique
-  markAutotechId Int @unique
-  active Boolean @default(true)
-  image String?
-
-  models Model[]
+  id             Int     @id @default(autoincrement())
+  mark           String  @unique
+  markAutotechId Int     @unique
+  active         Boolean @default(true)
+  image          String?
+  models         Model[]
 }
 
-// list models
 model Model {
-  id Int @id @default(autoincrement())
-  model String
+  id              Int            @id @default(autoincrement())
+  model           String
   modelAutotechId Int
-  range String
-  active Boolean @default(true)
-  image String?
+  range           String
+  active          Boolean        @default(true)
+  image           String?
+  brandId         Int
+  brand           Brand          @relation(fields: [brandId], references: [id])
+  modifications   Modification[]
 
-  brandId Int
-  brand Brand @relation(fields: [brandId], references: [id])
-
-  modifications Modification[]
   @@unique([brandId, modelAutotechId])
 }
 
-// list modifications
-model Modification  {
-  id Int @id @default(autoincrement())
+model Modification {
+  id                     Int                  @id @default(autoincrement())
   modificationAutotechId Int
-  typeName String?
-  typeRange String?
-  kw String?
-  hp String?
-  ccmTech Int?
-  capacity Decimal?
-  cylinders Int?
-  valve Int?
-  tonnage Int?
-  active Boolean @default(true)
-  image String?
-
-  fuelId Int
-  fuel Fuel @relation(fields: [fuelId], references: [id])
-  engineTypeId Int
-  engineType EngineType @relation(fields: [engineTypeId], references: [id])
-  fuelPreparationId Int
-  fuelPreparation FuelPreparation @relation(fields: [fuelPreparationId], references: [id])
-  bodyTypeId Int
-  bodyType BodyType @relation(fields: [bodyTypeId], references: [id])
-  driveTypeId Int
-  driveType DriveType @relation(fields: [driveTypeId], references: [id])
-
-  modelId  Int
-  model Model @relation(fields: [modelId], references: [id])
-
-  engines ModificationEngine[]
+  typeName               String?
+  typeRange              String?
+  kw                     String?
+  hp                     String?
+  ccmTech                Int?
+  capacity               Decimal?
+  cylinders              Int?
+  valve                  Int?
+  tonnage                Int?
+  active                 Boolean              @default(true)
+  image                  String?
+  fuelId                 Int
+  engineTypeId           Int
+  fuelPreparationId      Int
+  bodyTypeId             Int
+  driveTypeId            Int
+  modelId                Int
+  bodyType               BodyType             @relation(fields: [bodyTypeId], references: [id])
+  driveType              DriveType            @relation(fields: [driveTypeId], references: [id])
+  engineType             EngineType           @relation(fields: [engineTypeId], references: [id])
+  fuel                   Fuel                 @relation(fields: [fuelId], references: [id])
+  fuelPreparation        FuelPreparation      @relation(fields: [fuelPreparationId], references: [id])
+  model                  Model                @relation(fields: [modelId], references: [id])
+  engines                ModificationEngine[]
 
   @@unique([modelId, modificationAutotechId])
-
   @@index([modelId])
   @@index([modelId, fuelId, engineTypeId])
   @@index([modelId, bodyTypeId, driveTypeId])
 }
 
 model Engine {
-  id Int @id @default(autoincrement())
-  code String @unique
-
+  id            Int                  @id @default(autoincrement())
+  code          String               @unique
   modifications ModificationEngine[]
 }
 
 model ModificationEngine {
-  id Int @id @default(autoincrement())
-
+  id             Int          @id @default(autoincrement())
   modificationId Int
-  modification Modification @relation(fields: [modificationId], references: [id])
-
-  engineId Int
-  engine Engine @relation(fields: [engineId], references: [id])
+  engineId       Int
+  engine         Engine       @relation(fields: [engineId], references: [id])
+  modification   Modification @relation(fields: [modificationId], references: [id])
 
   @@unique([modificationId, engineId])
   @@index([engineId, modificationId])
 }
 
 model Fuel {
-  id Int @id @default(autoincrement())
-  name String @unique
-
-  modifications Modification[]
-
-}
-
-model EngineType  {
-  id Int @id @default(autoincrement())
-  name String @unique
-
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
   modifications Modification[]
 }
 
-model FuelPreparation  {
-  id Int @id @default(autoincrement())
-  name String @unique
+model EngineType {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  modifications Modification[]
+}
 
+model FuelPreparation {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
   modifications Modification[]
 }
 
 model BodyType {
-  id Int @id @default(autoincrement())
-  name String @unique
-
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
   modifications Modification[]
 }
 
-model DriveType  {
-  id Int @id @default(autoincrement())
-  name String @unique
-
+model DriveType {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
   modifications Modification[]
 }
