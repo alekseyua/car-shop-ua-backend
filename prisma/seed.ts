@@ -127,14 +127,24 @@ async function main() {
         const driveTypes = await prisma.driveType.findMany();
         const driveTypeMap = new Map(driveTypes.map(d => [d.name, d.id]));
         
-        const prepared: any[] = []
-    console.log('Seeding modification ...')
-        const models = await prisma.model.findMany()
-
+        let prepared: any[] = []
+        console.log('Seeding modification ...')
+        const models = await prisma.model.findMany({
+            include: {
+                brand: true
+            }
+        })
+        console.log(models[0])
         const modelMap = new Map(
-            models.map(m => [`${m.brandId}_${m.modelAutotechId}`, m.id])
+            models.map(m => [`${m.brand.markAutotechId}_${m.modelAutotechId}`, m.id])
         );
-        for (const mod of mods.flat()) {
+        let count = 0;
+        const arrMods = mods.flat();
+        const sizeChunk = 1000;
+        for (const mod of arrMods) {
+            if (count > 0 && count % 1000 === 0) {
+                console.log(`Progress: ${count}/${arrMods.length}`)
+            }
             const fuelId = fuelMap.get(mod.fuel);
             const engineTypeId = engineTypeMap.get(mod.engineType);
             const fuelPreparationId = fuelPrepMap.get(mod.fuelPreparation);
@@ -169,14 +179,25 @@ async function main() {
                 bodyTypeId,
                 driveTypeId,
             })
+            count++;
+            if(prepared.length >= sizeChunk){
+                console.log('🚀 inserting...');
+                await prisma.modification.createMany({
+                    data: prepared,
+                    skipDuplicates: true,
+                });
+                prepared = [];
+            }
         }
         console.log('prepare complate, loading db')
-        console.log('🚀 inserting...')
 
-        await prisma.modification.createMany({
-        data: prepared,
-        skipDuplicates: true,
-        })
+        
+        if(prepared.length){
+            await prisma.modification.createMany({
+                data: prepared,
+                skipDuplicates: true,
+            })
+        }
 
         console.log('✅ Done seeding')
 }
