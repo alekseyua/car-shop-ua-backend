@@ -129,7 +129,11 @@ async function main() {
         
         const prepared: any[] = []
     console.log('Seeding modification ...')
+        const models = await prisma.model.findMany()
 
+        const modelMap = new Map(
+            models.map(m => [`${m.brandId}_${m.modelAutotechId}`, m.id])
+        );
         for (const mod of mods.flat()) {
             const fuelId = fuelMap.get(mod.fuel);
             const engineTypeId = engineTypeMap.get(mod.engineType);
@@ -140,11 +144,6 @@ async function main() {
                 console.log('❌ skip mod', mod.typeId)
                 continue
             }
-            const models = await prisma.model.findMany()
-
-            const modelMap = new Map(
-                models.map(m => [`${m.brandId}_${m.modelAutotechId}`, m.id])
-            );
             const modelId = modelMap.get(`${mod.markId}_${mod.modelId}`)
             if (!modelId) continue
 
@@ -170,16 +169,16 @@ async function main() {
                 bodyTypeId,
                 driveTypeId,
             })
-            console.log('prepare complate, loading db')
-
-            await prisma.modification.createMany({
-                data: prepared,
-                skipDuplicates: true,
-            })
-
-
-            console.log('✅ Done seeding');
         }
+        console.log('prepare complate, loading db')
+        console.log('🚀 inserting...')
+
+        await prisma.modification.createMany({
+        data: prepared,
+        skipDuplicates: true,
+        })
+
+        console.log('✅ Done seeding')
 }
     main()
         .catch((e) => {
