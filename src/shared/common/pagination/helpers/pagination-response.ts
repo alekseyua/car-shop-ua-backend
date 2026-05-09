@@ -7,7 +7,7 @@ export function createRequestPagination<T> (
     total: number
 ):PaginationResponse<T>{
     return ({
-        data: [],
+        data: data,
         meta: {
             page,
             limit,

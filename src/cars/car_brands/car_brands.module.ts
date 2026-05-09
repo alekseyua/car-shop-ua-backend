@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CarBrandsService } from './car_brands.service';
 import { CarBrandsController } from './car_brands.controller';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { PrismaModule } from 'src/core/prisma/prisma.module';
 
 @Module({
   imports: [

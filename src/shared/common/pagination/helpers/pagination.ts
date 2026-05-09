@@ -1,10 +1,10 @@
 
-export const buildPagination = (page: number = 1, limit: number = 5): {
+export const buildPagination = (page: number = 2, limit: number = 5): {
     skip: number; take: number;
 } => {
     const s = (page - 1) * limit;
     return {
-        skip: s,
-        take: limit,
+        skip: Number(s),
+        take: Number(limit),
     }
 }
