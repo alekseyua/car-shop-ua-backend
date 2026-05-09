@@ -14,6 +14,7 @@ export class CarBrandsController {
 
   @Get()
   findAll() {
+    
     return this.carBrandsService.findAll();
   }
 
