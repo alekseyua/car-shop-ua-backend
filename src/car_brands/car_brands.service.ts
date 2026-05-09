@@ -11,9 +11,9 @@ export class CarBrandsService {
     return 'This action adds a new carBrand';
   }
 
-  findAll() {
-    // console.log({prisma: this.prisma})
-    return `This action returns all carBrands`;
+  async findAll() {
+    const res = await this.prisma.brand.findMany();
+    return res;
   }
 
   findOne(id: number) {
