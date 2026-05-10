@@ -1,26 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import { CreateCarModificationDto } from './dto/create-car_modification.dto';
-import { UpdateCarModificationDto } from './dto/update-car_modification.dto';
+import { ResponseCarModificationDto } from './dto/response-car_modification.dto';
+import { QueryCarModificationDto } from './dto/query-car_modfication.dto';
+import { buildPagination } from 'src/shared/common/pagination/helpers/pagination';
+import { PrismaService } from 'src/core/prisma/prisma.service';
+import { createRequestPagination } from 'src/shared/common/pagination/helpers/pagination-response';
+import { PaginationResponse } from 'src/shared/common/pagination/dto/paginated-response.dto';
 
 @Injectable()
 export class CarModificationService {
-  create(createCarModificationDto: CreateCarModificationDto) {
-    return 'This action adds a new carModification';
+  constructor(private prisma: PrismaService) { }
+
+  async findAll(dto: QueryCarModificationDto): Promise<PaginationResponse<ResponseCarModificationDto>> {
+
+    const { page, limit, modelId } = dto;
+    const { skip, take } = buildPagination(page, limit);
+    const idModel = Number(modelId);
+    const [modifications, total] = await this.prisma.$transaction([
+      this.prisma.modification.findMany({
+        where: {
+          modelId: idModel,
+        },
+        skip,
+        take
+      }),
+      this.prisma.modification.count({ where: { modelId: idModel } })
+    ])
+    return createRequestPagination(modifications, page, limit, total);
   }
 
-  findAll() {
-    return `This action returns all carModification`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} carModification`;
-  }
-
-  update(id: number, updateCarModificationDto: UpdateCarModificationDto) {
-    return `This action updates a #${id} carModification`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} carModification`;
-  }
 }
+

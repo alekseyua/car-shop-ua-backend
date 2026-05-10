@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { PrismaModule } from './core/prisma/prisma.module';
 import { CarModelsModule } from './cars/car_models/car_models.module';
 import { CarBrandsModule } from './cars/car_brands/car_brands.module';
 import { CoreModule } from './core/core.module';
 import { CarModificationModule } from './cars/car_modification/car_modification.module';
+import { ParserModule } from './parser/parser.module';
+import { CatalogModule } from './cars/catalog/catalog.module';
 
 @Module({
   imports: [
@@ -11,6 +12,8 @@ import { CarModificationModule } from './cars/car_modification/car_modification.
     CarModelsModule,
     CarBrandsModule,
     CarModificationModule,
+    ParserModule,
+    CatalogModule,
   ],
   controllers: [],
   providers: [],

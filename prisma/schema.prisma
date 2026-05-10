@@ -58,6 +58,7 @@ model Modification {
   fuelPreparation        FuelPreparation      @relation(fields: [fuelPreparationId], references: [id])
   model                  Model                @relation(fields: [modelId], references: [id])
   engines                ModificationEngine[]
+  catalogs                CatalogCar[]
 
   @@unique([modelId, modificationAutotechId])
   @@index([modelId])
@@ -110,4 +111,21 @@ model DriveType {
   id            Int            @id @default(autoincrement())
   name          String         @unique
   modifications Modification[]
+}
+
+model CatalogCar {
+  id Int @id @default(autoincrement())
+  groupId Int
+  groupCode String
+  subGroupCode String
+  count Int
+  typeAutotechId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  modificationId Int
+  modification Modification @relation(fields: [modificationId ], references: [id])
+
+  @@index([modificationId])
+  @@unique([modificationId, groupCode, subGroupCode])
 }

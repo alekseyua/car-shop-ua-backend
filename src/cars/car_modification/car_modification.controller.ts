@@ -1,34 +1,54 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { CarModificationService } from './car_modification.service';
-import { CreateCarModificationDto } from './dto/create-car_modification.dto';
-import { UpdateCarModificationDto } from './dto/update-car_modification.dto';
+import { QueryCarModificationDto } from './dto/query-car_modfication.dto';
+import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiQuery, getSchemaPath } from '@nestjs/swagger';
+import { ResponseCarModificationDto } from './dto/response-car_modification.dto';
+import { MetaDto } from 'src/shared/common/pagination/dto/meta.dto';
+import { ParserService } from 'src/parser/parser.service';
 
 @Controller('car-modification')
 export class CarModificationController {
-  constructor(private readonly carModificationService: CarModificationService) {}
+  constructor(
+    private readonly carModificationService: CarModificationService,
+    private readonly parserService: ParserService,
+  ) {}
 
-  @Post()
-  create(@Body() createCarModificationDto: CreateCarModificationDto) {
-    return this.carModificationService.create(createCarModificationDto);
-  }
+  @ApiOperation({
+    summary: 'Получить список модификаций автомобиля',
+    description:
+      'Возвращает список модификаций автомобиля по ID модели с поддержкой пагинации',
+  })
+
+  @ApiQuery({
+    name: 'modelId',
+    type: 'number',
+    required: true,
+    example: '1',
+    description: 'ID модели автомобиля',
+  })
+  
+  @ApiExtraModels(ResponseCarModificationDto)
+  @ApiExtraModels(MetaDto)
+  @ApiOkResponse({
+    description: 'список модификаций автомобиля по ID модели успешно получен',
+    schema: {
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            $ref: getSchemaPath(ResponseCarModificationDto)
+          }
+        },
+        meta: {
+          $ref: getSchemaPath(MetaDto)
+        }
+      }
+    }
+  })
 
   @Get()
-  findAll() {
-    return this.carModificationService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.carModificationService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCarModificationDto: UpdateCarModificationDto) {
-    return this.carModificationService.update(+id, updateCarModificationDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.carModificationService.remove(+id);
+  findAll(@Query() dto: QueryCarModificationDto) {
+    this.parserService.getCatalog(28435);
+    return this.carModificationService.findAll(dto);
   }
 }

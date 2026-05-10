@@ -10,5 +10,5 @@ export class QueryCarModelDto extends PaginationDto{
         example: '1',
         description: 'Brand id'
     })
-    "brandId": Number;
+    "brandId": number;
 }

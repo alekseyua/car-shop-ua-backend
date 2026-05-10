@@ -24,3 +24,6 @@ src/
     constants/
     decorators/
     types/
+
+    <!-- https://ecom.ad.ua/api/Car/Catalog/modificatinAutotechnicsId --> post request
+    
