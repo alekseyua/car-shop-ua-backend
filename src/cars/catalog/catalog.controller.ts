@@ -9,7 +9,7 @@ export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
   @Post()
-  create(@Body() createCatalogDto: CreateCatalogDto) {
+  create(@Body() createCatalogDto: CreateCatalogDto[]) {
     return this.catalogService.create(createCatalogDto);
   }
 

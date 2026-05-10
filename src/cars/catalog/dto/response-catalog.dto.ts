@@ -1,17 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ResponseCatalogCarDto {
-  @ApiProperty({
-    example: 15,
-    description: 'ID компании',
-  })
-  "comId": number;
 
   @ApiProperty({
     example: 3333,
     description: 'ID типа',
   })
-  "typeId": number;
+  "modificationId": number;
 
   @ApiProperty({
     example: 2046,
@@ -36,4 +31,15 @@ export class ResponseCatalogCarDto {
     description: 'Количество товаров',
   })
   "count": number;
+  @ApiProperty({
+    example: '2026-05-10 16:34:24.964',
+    description: 'Дата создания',
+  })
+  "createdAt": Date;
+  @ApiProperty({
+    example: '2026-05-10 16:34:24.964',
+    description: 'Дата последнего обновления',
+  })
+  "updatedAt": Date;
+  
 }
