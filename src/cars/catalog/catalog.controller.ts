@@ -10,7 +10,7 @@ export class CatalogController {
 
   @Post()
   create(@Body() createCatalogDto: CreateCatalogDto[]) {
-    return this.catalogService.create(createCatalogDto);
+    // return this.catalogService.create(createCatalogDto);
   }
 
   @Get()

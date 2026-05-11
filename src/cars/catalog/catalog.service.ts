@@ -16,7 +16,12 @@ export class CatalogService {
     private parser: ParserService
   ){}
 
-  async create(dto: CreateCatalogDto[]) {
+  async create(dto: CreateCatalogDto[], idAutotechnicsModification: number) {
+    const modification = await this.prisma.modification.findMany({
+      where: {
+        modificationAutotechId: Number(idAutotechnicsModification)
+      }
+    })
    await this.prisma.catalogCar.createMany({
     data: dto.map(item => ({
         groupId: item.groupId,
@@ -24,7 +29,7 @@ export class CatalogService {
         subGroupCode: item.subGroupCode,
         count: item.count,
         typeAutotechId: item.typeId,
-        modificationId: item.typeId
+        modificationId: modification[0].id
     })),
   });
     return 'This action adds a new catalog';
@@ -48,7 +53,7 @@ export class CatalogService {
       // пока возвращает полный список с парсинга
       // не сделано и не продумана логика по обновлению данных
       const fromParser = await this.parser.getCatalog(typeAutotechId);
-      this.create(fromParser)
+      this.create(fromParser, typeAutotechId)
       return createRequestPagination(fromParser, page, limit, fromParser.length);
     }else{
       return createRequestPagination(catalogDb, page, limit, totalDb);
