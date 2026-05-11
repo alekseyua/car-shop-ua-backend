@@ -114,4 +114,32 @@ export class ResponseCarModificationDto {
         description: 'ID модели автомобиля',
     })
     "modelId": Number;
+
+    @ApiProperty({
+        example: {
+            model: 'Astra'
+        },
+        description: 'Модель автомобиля',
+    })
+    "model": {
+        "model": String;
+    }
+    @ApiProperty({
+        example: {
+            name: 'Бензин'
+        },
+        description: 'Тип двигателя',
+    })
+    "engineType": {
+        "name": String;
+    }
+    @ApiProperty({
+        example: {
+            name: 'Седан'
+        },
+        description: 'Тип кузова',
+    })
+    "bodyType": {
+        "name": String;
+    }
 }

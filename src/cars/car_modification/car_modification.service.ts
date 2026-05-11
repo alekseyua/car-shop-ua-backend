@@ -21,7 +21,24 @@ export class CarModificationService {
           modelId: idModel,
         },
         skip,
-        take
+        take,
+        include:{
+          model: {
+            select: {
+              model: true
+            }
+          },
+          engineType: {
+            select: {
+              name: true
+            }
+          },
+          bodyType: {
+            select: {
+              name: true
+            }
+          },
+        }
       }),
       this.prisma.modification.count({ where: { modelId: idModel } })
     ])
