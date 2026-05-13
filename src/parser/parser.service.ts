@@ -1,5 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Browser, chromium, Page, request } from 'playwright';
+import { ResponseParserItemsCatalogDto } from 'src/cars/items_catalog/dto/response-items_catalog.dto';
 import { delay } from 'src/shared/common/pagination/helpers/helpers';
 
 @Injectable()
@@ -35,8 +36,6 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
             const catalog = await (await api.post(url,{
                 headers: headers
             })).json()
-            console.log(catalog[0],catalog.length)
-            // await delay(50000)
             return catalog;
         } catch (error) {
             console.log(error)
@@ -46,6 +45,38 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
         }
     }
 
+    async getItemsCatalog(typeId: number, idGroup: number): Promise<ResponseParserItemsCatalogDto[]> {
+        const url = `https://ecom.ad.ua/api/Car/CatalogItems/?typeId=${typeId}&groupId=${idGroup}`;
+        const page = await this.browser.newPage();
+        try {
+            await page.goto('https://www.autotechnics.ua/b2b', { waitUntil: 'networkidle' })
+            // проверяем если нужно активировать ввход то проходим авторизацию
+            const headers = await this.authorize(page);
+            const api = await request.newContext({
+                baseURL: 'https://ecom.ad.ua',
+                extraHTTPHeaders: {
+                    'Content-Type': 'application/json',
+                    // Добавьте другие необходимые заголовки, например, авторизационные токены
+                },
+            });
+            console.log('Requesting items catalog with headers:',{url}, {headers});
+            const response = await api.post(url, { headers });
+            console.log('Response:', await response.json());
+            const catalogItems = await response.json();
+
+            if (!Array.isArray(catalogItems)) {
+                throw new Error('Invalid catalog response format');
+            }
+
+            return catalogItems;
+        } catch (error) {
+            console.log(error);
+            throw error;
+        } finally {
+            console.log('finality')
+            await page.close();
+        }
+    }
     private async authorize(page: Page) {
         console.log('start auth check');
 

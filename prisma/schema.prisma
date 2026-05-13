@@ -126,6 +126,5 @@ model CatalogCar {
   modificationId Int
   modification   Modification @relation(fields: [modificationId], references: [id])
 
-  @@unique([modificationId, groupCode, subGroupCode])
   @@index([modificationId])
 }

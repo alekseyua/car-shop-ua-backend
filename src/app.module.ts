@@ -5,6 +5,7 @@ import { CoreModule } from './core/core.module';
 import { CarModificationModule } from './cars/car_modification/car_modification.module';
 import { ParserModule } from './parser/parser.module';
 import { CatalogModule } from './cars/catalog/catalog.module';
+import { ItemsCatalogModule } from './cars/items_catalog/items_catalog.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CatalogModule } from './cars/catalog/catalog.module';
     CarModificationModule,
     ParserModule,
     CatalogModule,
+    ItemsCatalogModule,
   ],
   controllers: [],
   providers: [],
