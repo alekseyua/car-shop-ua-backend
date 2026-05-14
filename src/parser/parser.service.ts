@@ -59,9 +59,9 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
                     // Добавьте другие необходимые заголовки, например, авторизационные токены
                 },
             });
-            console.log('Requesting items catalog with headers:',{url}, {headers});
+            // console.log('Requesting items catalog with headers:',{url}, {headers});
             const response = await api.post(url, { headers });
-            console.log('Response:', await response.json());
+            // console.log('Response:', await response.json());
             const catalogItems = await response.json();
 
             if (!Array.isArray(catalogItems)) {

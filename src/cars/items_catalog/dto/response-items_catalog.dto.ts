@@ -141,3 +141,32 @@ export class ResponseParserItemsCatalogDto {
     @ApiProperty()
     "checkSend": boolean;
 }
+
+export class ResponseItemCatalogDto { 
+    @ApiProperty() 
+    "itemNo": string; 
+    @ApiProperty() 
+    "brand": string; 
+    @ApiProperty() 
+    "quantity": number; 
+    @ApiProperty() 
+    "description": string; 
+    @ApiProperty() 
+    "searchDescription": string; 
+    @ApiProperty() 
+    "inStock": boolean; 
+    @ApiProperty() 
+    "firstPic": string; 
+    @ApiProperty() 
+    "criteriaLine": string; 
+    @ApiProperty() 
+    "retail": number; 
+    @ApiProperty() 
+    "price": number; 
+    @ApiProperty() 
+    "salesUoM": string; 
+    @ApiProperty({ type: [CriteriaDto], }) 
+    "criterias": CriteriaDto[]; 
+    @ApiProperty({ type: StockDto, }) 
+    "stock": StockDto; 
+}
