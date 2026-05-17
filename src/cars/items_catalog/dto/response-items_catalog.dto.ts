@@ -281,11 +281,11 @@ export class ProductFile {
 }
 export class ProductDetailResponse {
     @ApiProperty({ type: () => ProductItem })
-    "item": ProductItem;
+    "item": ProductItem | null;
     @ApiProperty({ type: () => [ProductItem] })
-    "replaces": ProductItem[];
+    "replaces": ProductItem[] | null;
     @ApiProperty()
-    "pictures": string[];
+    "pictures": string[] | null;
     @ApiProperty({ type: () => [ProductFile] })
-    "files": ProductFile[];
+    "files": ProductFile[] | null;
 }

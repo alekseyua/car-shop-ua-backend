@@ -9,7 +9,7 @@ export class ItemsCatalogService {
   constructor(private parserService: ParserService) { }
 
   async findAll(dto: QueryItemsCatalogDto): Promise<ResponseItemCatalogDto[]> {
-    try{
+    try {
       const { typeId, groupId } = dto;
       const getItemsCatalog: ResponseParserItemsCatalogDto[] = await this.parserService.getItemsCatalog(typeId, groupId);
       // console.log(getItemsCatalog[0], getItemsCatalog.length);
@@ -28,28 +28,41 @@ export class ItemsCatalogService {
         criterias: item.criterias,
         stock: JSON.parse(item.stock)
       }));
-    }catch(error){
-        console.log(error);
-        throw error;  
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
     //getItemsCatalog
   }
 
   // getItemDetails
   async findOne(id: string): Promise<ProductDetailResponse> {
-    try{
-      const response = await this.parserService.getItemDetails(id);
+    try {
+      const response: ProductDetailResponse = await this.parserService.getItemDetails(id);
+      if (
+        !response.files &&
+        !response.item &&
+        !response.replaces &&
+        !response.pictures
+      ) {
+        return response;
+      }
+
+      if (!response.item) {
+        return response;
+      }
+
       const res: ProductDetailResponse = {
         ...response,
         item: {
           ...response.item,
           stock: JSON.parse(response.item.stock)
         }
-      }; 
+      };
       return res;
-    }catch(error){
-        console.log(error);
-        throw error;  
-     }
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 }

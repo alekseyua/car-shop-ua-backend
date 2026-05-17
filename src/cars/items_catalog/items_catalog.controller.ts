@@ -1,10 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ItemsCatalogService } from './items_catalog.service';
-import { CreateItemsCatalogDto } from './dto/create-items_catalog.dto';
-import { UpdateItemsCatalogDto } from './dto/update-items_catalog.dto';
 import { QueryItemsCatalogDto } from './dto/query-items_catalog.dto';
 import { ProductDetailResponse, ResponseItemCatalogDto } from './dto/response-items_catalog.dto';
-import { ApiResponseProperty } from '@nestjs/swagger';
+import { ApiOkResponse } from '@nestjs/swagger';
 
 @Controller('items-catalog')
 export class ItemsCatalogController {
@@ -15,7 +13,7 @@ export class ItemsCatalogController {
     return this.itemsCatalogService.findAll(dto);
   }
 
-  @ApiResponseProperty({
+  @ApiOkResponse({
     type: ProductDetailResponse,
   })
   @Get(':id')
