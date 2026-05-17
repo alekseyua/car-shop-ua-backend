@@ -221,8 +221,6 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
                 }
             },
         );
-        console.log('ITEM DETAILS STATUS:', response.status());
-        console.log('ITEM DETAILS RESPONSE:', await response.text());
         if (!response.ok()) {
             throw new Error(
                 `Item details error: ${response.status()}`

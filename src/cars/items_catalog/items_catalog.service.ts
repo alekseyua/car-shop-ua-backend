@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { CreateItemsCatalogDto } from './dto/create-items_catalog.dto';
-import { UpdateItemsCatalogDto } from './dto/update-items_catalog.dto';
 import { ParserService } from 'src/parser/parser.service';
 import { QueryItemsCatalogDto } from './dto/query-items_catalog.dto';
 import { ProductDetailResponse, ResponseItemCatalogDto, ResponseParserItemsCatalogDto } from './dto/response-items_catalog.dto';
@@ -8,9 +7,6 @@ import { ProductDetailResponse, ResponseItemCatalogDto, ResponseParserItemsCatal
 @Injectable()
 export class ItemsCatalogService {
   constructor(private parserService: ParserService) { }
-  create(createItemsCatalogDto: CreateItemsCatalogDto) {
-    return 'This action adds a new itemsCatalog';
-  }
 
   async findAll(dto: QueryItemsCatalogDto): Promise<ResponseItemCatalogDto[]> {
     try{
@@ -39,7 +35,21 @@ export class ItemsCatalogService {
     //getItemsCatalog
   }
 
-  findOne(id: string): Promise<ProductDetailResponse> {
-    return this.parserService.getItemDetails(id);
+  // getItemDetails
+  async findOne(id: string): Promise<ProductDetailResponse> {
+    try{
+      const response = await this.parserService.getItemDetails(id);
+      const res: ProductDetailResponse = {
+        ...response,
+        item: {
+          ...response.item,
+          stock: JSON.parse(response.item.stock)
+        }
+      }; 
+      return res;
+    }catch(error){
+        console.log(error);
+        throw error;  
+     }
   }
 }
