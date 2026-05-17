@@ -8,6 +8,8 @@ async function bootstrap() {
     origin: true,
     credentials: true,
   });
+  app.enableShutdownHooks();
+
   const config = new DocumentBuilder()
     .setTitle('Car Shop API')
     .setDescription('API documentation')

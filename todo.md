@@ -27,3 +27,9 @@ src/
 
     <!-- https://ecom.ad.ua/api/Car/Catalog/modificatinAutotechnicsId --> post request
     
+    задачи 
+    1) доделать описание ответа для /items-catalog
+    2) доделать описание ответа для /items-catalog/{id}
+    3) возмодно привести к стандарту с пагинацией
+    4) доделать описание ответа для /catalog
+    5) добавить парсер для получения оригинальных номеров

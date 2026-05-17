@@ -3,7 +3,7 @@ import { CreateItemsCatalogDto } from './dto/create-items_catalog.dto';
 import { UpdateItemsCatalogDto } from './dto/update-items_catalog.dto';
 import { ParserService } from 'src/parser/parser.service';
 import { QueryItemsCatalogDto } from './dto/query-items_catalog.dto';
-import { ResponseItemCatalogDto, ResponseParserItemsCatalogDto } from './dto/response-items_catalog.dto';
+import { ProductDetailResponse, ResponseItemCatalogDto, ResponseParserItemsCatalogDto } from './dto/response-items_catalog.dto';
 
 @Injectable()
 export class ItemsCatalogService {
@@ -39,15 +39,7 @@ export class ItemsCatalogService {
     //getItemsCatalog
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} itemsCatalog`;
-  }
-
-  update(id: number, updateItemsCatalogDto: UpdateItemsCatalogDto) {
-    return `This action updates a #${id} itemsCatalog`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} itemsCatalog`;
+  findOne(id: string): Promise<ProductDetailResponse> {
+    return this.parserService.getItemDetails(id);
   }
 }

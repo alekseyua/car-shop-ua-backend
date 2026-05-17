@@ -8,29 +8,10 @@ import { QueryCatalogDto } from './dto/query-catalog.dto';
 export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
-  @Post()
-  create(@Body() createCatalogDto: CreateCatalogDto[]) {
-    // return this.catalogService.create(createCatalogDto);
-  }
-
   @Get()
     findAll(@Query() dto: QueryCatalogDto) {
 
     return this.catalogService.findAll(dto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.catalogService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCatalogDto: UpdateCatalogDto) {
-    return this.catalogService.update(+id, updateCatalogDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.catalogService.remove(+id);
-  }
 }

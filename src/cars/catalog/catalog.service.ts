@@ -61,15 +61,4 @@ export class CatalogService {
 
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} catalog`;
-  }
-
-  update(id: number, updateCatalogDto: UpdateCatalogDto) {
-    return `This action updates a #${id} catalog`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} catalog`;
-  }
 }
