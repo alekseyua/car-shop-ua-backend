@@ -4,6 +4,7 @@ import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiQuery, getSchemaPath } 
 import { QueryCarModelDto } from './dto/query-car_model.dt';
 import { MetaDto } from 'src/shared/common/pagination/dto/meta.dto';
 import { ResponseCarModelDto } from './dto/response-car_model.dto';
+import { PaginationResponse } from 'src/shared/common/pagination/dto/paginated-response.dto';
 
 @Controller('car-models')
 export class CarModelsController {
@@ -33,7 +34,7 @@ export class CarModelsController {
     }
   })
   @Get()
-  findAll(@Query() dto: QueryCarModelDto) {
+  findAll(@Query() dto: QueryCarModelDto):Promise<PaginationResponse<ResponseCarModelDto>> {
     return this.carModelsService.findAll(dto);
   }
 

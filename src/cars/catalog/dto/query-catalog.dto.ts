@@ -5,7 +5,7 @@ import { PaginationDto } from "src/shared/common/pagination/dto/pagination-query
 
 export class QueryCatalogDto extends PaginationDto {
     @ApiProperty({
-        example: '3333',
+        example: 3333,
         required: true,
         description: 'type id modification'
     })

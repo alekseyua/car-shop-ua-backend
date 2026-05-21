@@ -7,7 +7,7 @@ export class QueryCarModelDto extends PaginationDto{
     @Type(() => Number)
     @IsNumber()
     @ApiProperty({
-        example: '1',
+        example: 1,
         description: 'Brand id'
     })
     "brandId": number;

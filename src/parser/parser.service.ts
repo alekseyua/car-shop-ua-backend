@@ -10,7 +10,8 @@ import {
     BrowserContext,
     chromium,
 } from 'playwright';
-import { ProductDetailResponse } from 'src/cars/items_catalog/dto/response-items_catalog.dto';
+import { ResponseProductDetailDto } from 'src/cars/items_catalog/dto/response-items_catalog.dto';
+import { ResponseOemByItemDto } from 'src/cars/oem_by_item/dto/response_oem_by_item.dto';
 
 @Injectable()
 export class ParserService implements OnModuleInit, OnModuleDestroy {
@@ -211,7 +212,7 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     // GET ITEM DETAILS
     // -----------------------------------
    
-    async getItemDetails(itemNo: string): Promise<ProductDetailResponse> {
+    async getItemDetails(itemNo: string): Promise<ResponseProductDetailDto> {
         const response = await this.authorizedPost(
             `/api/Items/ItemCard`,
             {
@@ -224,6 +225,28 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
         if (!response.ok()) {
             throw new Error(
                 `Item details error: ${response.status()}`
+            );
+        }
+
+        return await response.json();
+    }
+    // -----------------------------------
+    // GET LIST ITEM OEM
+    // -----------------------------------
+
+    async getListItemOem(itemNo: string): Promise<ResponseOemByItemDto[]> {
+        const response = await this.authorizedPost(
+            'api/Catalog/ItemOE',
+            {
+                data: JSON.stringify(itemNo),
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }
+        );
+        if (!response.ok()) {
+            throw new Error(
+                `Item OEM error: ${response.status()}`
             );
         }
 

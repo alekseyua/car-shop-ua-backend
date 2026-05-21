@@ -1,17 +1,36 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { CatalogService } from './catalog.service';
-import { CreateCatalogDto } from './dto/create-catalog.dto';
-import { UpdateCatalogDto } from './dto/update-catalog.dto';
 import { QueryCatalogDto } from './dto/query-catalog.dto';
+import { PaginationResponse } from 'src/shared/common/pagination/dto/paginated-response.dto';
+import { ResponseCatalogCarDto } from './dto/response-catalog.dto';
+import { ApiExtraModels, ApiOkResponse, getSchemaPath } from '@nestjs/swagger';
+import { MetaDto } from 'src/shared/common/pagination/dto/meta.dto';
 
 @Controller('catalog')
 export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
+  @ApiExtraModels(ResponseCatalogCarDto)
+  @ApiExtraModels(MetaDto)
+  @ApiOkResponse({
+    description: 'Список автомобилей в каталоге успешно получен',
+    schema: {
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            $ref: getSchemaPath(ResponseCatalogCarDto)
+          }
+        },
+        meta: {
+          $ref: getSchemaPath(MetaDto)
+        }
+      }
+    }
+  })
   @Get()
-    findAll(@Query() dto: QueryCatalogDto) {
+    findAll(@Query() dto: QueryCatalogDto):Promise<PaginationResponse<ResponseCatalogCarDto>> {
 
     return this.catalogService.findAll(dto);
   }
-
 }

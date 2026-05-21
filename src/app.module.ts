@@ -6,6 +6,7 @@ import { CarModificationModule } from './cars/car_modification/car_modification.
 import { ParserModule } from './parser/parser.module';
 import { CatalogModule } from './cars/catalog/catalog.module';
 import { ItemsCatalogModule } from './cars/items_catalog/items_catalog.module';
+import { OemByItemModule } from './cars/oem_by_item/oem_by_item.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ItemsCatalogModule } from './cars/items_catalog/items_catalog.module';
     ParserModule,
     CatalogModule,
     ItemsCatalogModule,
+    OemByItemModule,
   ],
   controllers: [],
   providers: [],

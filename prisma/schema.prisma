@@ -128,3 +128,15 @@ model CatalogCar {
 
   @@index([modificationId])
 }
+
+model ListOEMByItem {
+  id Int @id @default(autoincrement())
+  brand String
+  code String
+  comId Int
+  itemNo String
+  search String
+
+  @@index([itemNo])
+  @@index([code])
+}

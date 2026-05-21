@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateItemsCatalogDto } from './dto/create-items_catalog.dto';
 import { ParserService } from 'src/parser/parser.service';
 import { QueryItemsCatalogDto } from './dto/query-items_catalog.dto';
-import { ProductDetailResponse, ResponseItemCatalogDto, ResponseParserItemsCatalogDto } from './dto/response-items_catalog.dto';
+import { ResponseProductDetailDto, ResponseItemCatalogDto, ResponseParserItemsCatalogDto } from './dto/response-items_catalog.dto';
 
 @Injectable()
 export class ItemsCatalogService {
@@ -36,9 +36,9 @@ export class ItemsCatalogService {
   }
 
   // getItemDetails
-  async findOne(id: string): Promise<ProductDetailResponse> {
+  async findOne(id: string): Promise<ResponseProductDetailDto> {
     try {
-      const response: ProductDetailResponse = await this.parserService.getItemDetails(id);
+      const response: ResponseProductDetailDto = await this.parserService.getItemDetails(id);
       if (
         !response.files &&
         !response.item &&
@@ -52,7 +52,7 @@ export class ItemsCatalogService {
         return response;
       }
 
-      const res: ProductDetailResponse = {
+      const res: ResponseProductDetailDto = {
         ...response,
         item: {
           ...response.item,

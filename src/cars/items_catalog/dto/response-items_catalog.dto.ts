@@ -172,7 +172,7 @@ export class ResponseItemCatalogDto {
 }
 
 
-
+// detail product
 export class ProductItem {
     @ApiProperty()
     "comId": number;
@@ -279,13 +279,22 @@ export class ProductFile {
     @ApiProperty()
     "fileDescript": string;
 }
-export class ProductDetailResponse {
-    @ApiProperty({ type: () => ProductItem })
+export class ResponseProductDetailDto {
+    @ApiProperty({ 
+        type: () => ProductItem,
+        nullable: true,
+    })
     "item": ProductItem | null;
-    @ApiProperty({ type: () => [ProductItem] })
+    @ApiProperty({
+        type: () => [ProductItem],
+        nullable: true, })
     "replaces": ProductItem[] | null;
-    @ApiProperty()
+    @ApiProperty({
+        nullable: true,
+})
     "pictures": string[] | null;
-    @ApiProperty({ type: () => [ProductFile] })
+    @ApiProperty({
+        type: () => [ProductFile],
+        nullable: true, })
     "files": ProductFile[] | null;
 }
