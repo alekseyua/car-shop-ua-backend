@@ -1,19 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateItemsCatalogDto } from './dto/create-items_catalog.dto';
 import { ParserService } from 'src/parser/parser.service';
 import { QueryItemsCatalogDto } from './dto/query-items_catalog.dto';
-import { ResponseProductDetailDto, ResponseItemCatalogDto, ResponseParserItemsCatalogDto } from './dto/response-items_catalog.dto';
+import {
+  ResponseProductDetailDto,
+  ResponseItemCatalogDto,
+  ResponseParserItemsCatalogDto,
+  ProductItem,
+} from './dto/response-items_catalog.dto';
+import {
+  markupPercentPrice,
+  normalizeStock,
+} from 'src/shared/common/helpers/helpers';
+import { adminConfig } from 'src/core/config/admin.config';
 
 @Injectable()
-export class ItemsCatalogService {
-  constructor(private parserService: ParserService) { }
+export class ItemCatalogService {
+  constructor(private parserService: ParserService) {}
 
   async findAll(dto: QueryItemsCatalogDto): Promise<ResponseItemCatalogDto[]> {
     try {
       const { typeId, groupId } = dto;
-      const getItemsCatalog: ResponseParserItemsCatalogDto[] = await this.parserService.getItemsCatalog(typeId, groupId);
+      const getItemsCatalog: ResponseParserItemsCatalogDto[] =
+        await this.parserService.getItemsCatalog(typeId, groupId);
       // console.log(getItemsCatalog[0], getItemsCatalog.length);
-      return getItemsCatalog.map(item => ({
+      return getItemsCatalog.map((item) => ({
         itemNo: item.itemNo,
         brand: item.brand,
         quantity: item.quantity,
@@ -23,10 +33,10 @@ export class ItemsCatalogService {
         firstPic: item.firstPic,
         criteriaLine: item.criteriaLine,
         retail: item.retail,
-        price: item.price,
+        price: markupPercentPrice(item.price),
         salesUoM: item.salesUoM,
         criterias: item.criterias,
-        stock: JSON.parse(item.stock)
+        stock: normalizeStock(item.stock, adminConfig.autotechsnicsCity),
       }));
     } catch (error) {
       console.log(error);
@@ -38,7 +48,8 @@ export class ItemsCatalogService {
   // getItemDetails
   async findOne(id: string): Promise<ResponseProductDetailDto> {
     try {
-      const response: ResponseProductDetailDto = await this.parserService.getItemDetails(id);
+      const response: ResponseProductDetailDto =
+        await this.parserService.getItemDetails(id);
       if (
         !response.files &&
         !response.item &&
@@ -51,13 +62,21 @@ export class ItemsCatalogService {
       if (!response.item) {
         return response;
       }
-
+      const normolizeReplaces = response.replaces?.map((item: ProductItem) => ({
+        ...item,
+        price: markupPercentPrice(item.price),
+      }));
       const res: ResponseProductDetailDto = {
         ...response,
         item: {
           ...response.item,
-          stock: JSON.parse(response.item.stock)
-        }
+          price: markupPercentPrice(response.item.price),
+          stock: normalizeStock(
+            response.item.stock as string,
+            adminConfig.autotechsnicsCity,
+          ),
+        },
+        replaces: normolizeReplaces ?? null,
       };
       return res;
     } catch (error) {

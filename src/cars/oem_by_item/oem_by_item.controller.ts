@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { OemByItemService } from './oem_by_item.service';
 import { QueryOemByItemDto } from './dto/query_oem_by_item.dto';
 import { ResponseOemByItemDto } from './dto/response_oem_by_item.dto';
+import { ApiOkResponse } from '@nestjs/swagger';
 
 @Controller('oem-by-item')
 export class OemByItemController {
@@ -17,10 +18,15 @@ export class OemByItemController {
   //   return this.oemByItemService.findAll();
   // }
 
+  @ApiOkResponse({
+    type: [ResponseOemByItemDto],
+  })
   @Get(':id')
-  async findOne(@Param() param: QueryOemByItemDto): Promise<ResponseOemByItemDto[]> {
+  async findOne(
+    @Param() param: QueryOemByItemDto,
+  ): Promise<ResponseOemByItemDto[]> {
     console.log('param', param);
-    return await this.oemByItemService.findOne({id: param.id});
+    return await this.oemByItemService.findOne({ id: param.id });
   }
 
   // @Patch(':id')

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ItemsCatalogService } from './items_catalog.service';
-import { ItemsCatalogController } from './items_catalog.controller';
+import { ItemCatalogService } from './item_catalog.service';
+import { ItemsCatalogController } from './item_catalog.controller';
 import { PrismaModule } from 'src/core/prisma/prisma.module';
 import { ParserModule } from 'src/parser/parser.module';
 
@@ -10,6 +10,6 @@ import { ParserModule } from 'src/parser/parser.module';
     ParserModule
   ],
   controllers: [ItemsCatalogController],
-  providers: [ItemsCatalogService],
+  providers: [ItemCatalogService],
 })
 export class ItemsCatalogModule {}

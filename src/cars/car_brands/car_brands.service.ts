@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PaginationDto } from 'src/shared/common/pagination/dto/pagination-query-dto';
-import { buildPagination } from 'src/shared/common/pagination/helpers/pagination';
-import { createRequestPagination } from 'src/shared/common/pagination/helpers/pagination-response';
+import { buildPagination } from 'src/shared/common/helpers/pagination';
+import { createRequestPagination } from 'src/shared/common/helpers/pagination-response';
 import { ConfigService } from '@nestjs/config';
 
 import { ResponseCarBrandDto } from './dto/response-car_brand.dto';

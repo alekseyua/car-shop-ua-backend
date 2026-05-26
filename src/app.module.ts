@@ -5,7 +5,7 @@ import { CoreModule } from './core/core.module';
 import { CarModificationModule } from './cars/car_modification/car_modification.module';
 import { ParserModule } from './parser/parser.module';
 import { CatalogModule } from './cars/catalog/catalog.module';
-import { ItemsCatalogModule } from './cars/items_catalog/items_catalog.module';
+import { ItemsCatalogModule } from './cars/item_catalog/item_catalog.module';
 import { OemByItemModule } from './cars/oem_by_item/oem_by_item.module';
 
 @Module({

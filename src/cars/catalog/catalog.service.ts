@@ -6,8 +6,8 @@ import { ParserService } from 'src/parser/parser.service';
 import { QueryCatalogDto } from './dto/query-catalog.dto';
 import { PaginationResponse } from 'src/shared/common/pagination/dto/paginated-response.dto';
 import { ResponseCatalogCarDto } from './dto/response-catalog.dto';
-import { createRequestPagination } from 'src/shared/common/pagination/helpers/pagination-response';
-import { buildPagination } from 'src/shared/common/pagination/helpers/pagination';
+import { createRequestPagination } from 'src/shared/common/helpers/pagination-response';
+import { buildPagination } from 'src/shared/common/helpers/pagination';
 
 @Injectable()
 export class CatalogService {

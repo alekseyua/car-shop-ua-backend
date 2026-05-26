@@ -4,7 +4,7 @@ import { ParserService } from 'src/parser/parser.service';
 import { ResponseOemByItemDto } from './dto/response_oem_by_item.dto';
 import { CreateOemByItemDto } from './dto/create_oem_by_item.dto';
 import { PrismaService } from 'src/core/prisma/prisma.service';
-import { normoliseString } from 'src/shared/common/pagination/helpers/helpers';
+import { normoliseString } from 'src/shared/common/helpers/helpers';
 
 @Injectable()
 export class OemByItemService {

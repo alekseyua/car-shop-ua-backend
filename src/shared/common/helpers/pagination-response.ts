@@ -1,4 +1,4 @@
-import { PaginationResponse } from "../dto/paginated-response.dto";
+import { PaginationResponse } from "../pagination/dto/paginated-response.dto";
 
 export function createRequestPagination<T> (
     data: T[],

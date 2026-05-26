@@ -10,246 +10,225 @@ import {
     BrowserContext,
     chromium,
 } from 'playwright';
-import { ResponseProductDetailDto } from 'src/cars/items_catalog/dto/response-items_catalog.dto';
+import { ResponseParserItemsCatalogDto, ResponseProductDetailDto } from 'src/cars/item_catalog/dto/response-items_catalog.dto';
 import { ResponseOemByItemDto } from 'src/cars/oem_by_item/dto/response_oem_by_item.dto';
 
 @Injectable()
 export class ParserService implements OnModuleInit, OnModuleDestroy {
-    private browser!: Browser;
-    private context!: BrowserContext;
-    private request!: APIRequestContext;
+  private browser!: Browser;
+  private context!: BrowserContext;
+  private request!: APIRequestContext;
 
-    private token: string | null = null;
+  private token: string | null = null;
 
-    // -----------------------------------
-    // INIT
-    // -----------------------------------
+  // -----------------------------------
+  // INIT
+  // -----------------------------------
 
-    async onModuleInit() {
-        this.browser = await chromium.launch({
-            headless: true,
-        });
+  async onModuleInit() {
+    this.browser = await chromium.launch({
+      headless: true,
+    });
 
-        this.context = await this.browser.newContext({
-            baseURL: 'https://ecom.ad.ua',
-        });
+    this.context = await this.browser.newContext({
+      baseURL: 'https://ecom.ad.ua',
+    });
 
-        this.request = this.context.request;
+    this.request = this.context.request;
 
-        await this.login();
+    await this.login();
 
-        console.log('ParserService initialized');
+    console.log('ParserService initialized');
+  }
+
+  // -----------------------------------
+  // DESTROY
+  // -----------------------------------
+
+  async onModuleDestroy() {
+    await this.context?.close();
+    await this.browser?.close();
+  }
+
+  // -----------------------------------
+  // LOGIN
+  // -----------------------------------
+
+  private async login() {
+    console.log('START LOGIN...');
+
+    const response = await this.request.post('/api/user/login', {
+      data: {
+        comId: 15,
+        login: '48196', // process.env.AUTO_LOGIN,
+        pwd: 'CvF8TJwv', //rocess.env.AUTO_PASSWORD,
+      },
+    });
+
+    if (!response.ok()) {
+      throw new Error(`Login failed: ${response.status()}`);
     }
 
-    // -----------------------------------
-    // DESTROY
-    // -----------------------------------
+    const data = await response.json();
 
-    async onModuleDestroy() {
-        await this.context?.close();
-        await this.browser?.close();
+    if (!data?.token) {
+      throw new Error('Token not found in login response');
     }
 
-    // -----------------------------------
-    // LOGIN
-    // -----------------------------------
+    this.token = data.token;
 
-    private async login() {
-        console.log('START LOGIN...');
+    console.log('LOGIN SUCCESS');
+  }
 
-        const response = await this.request.post(
-            '/api/user/login',
-            {
-                data: {
-                    comId: 15,
-                    login: "48196",// process.env.AUTO_LOGIN,
-                    pwd: 'CvF8TJwv',//rocess.env.AUTO_PASSWORD,
-                },
-            },
-        );
+  // -----------------------------------
+  // AUTH HEADERS
+  // -----------------------------------
 
-        if (!response.ok()) {
-            throw new Error(
-                `Login failed: ${response.status()}`
-            );
-        }
-
-        const data = await response.json();
-
-        if (!data?.token) {
-            throw new Error('Token not found in login response');
-        }
-
-        this.token = data.token;
-
-        console.log('LOGIN SUCCESS');
+  private getAuthHeaders() {
+    if (!this.token) {
+      throw new Error('Token is missing');
     }
 
-    // -----------------------------------
-    // AUTH HEADERS
-    // -----------------------------------
+    return {
+      Authorization: `Bearer ${this.token}`,
+    };
+  }
 
-    private getAuthHeaders() {
-        if (!this.token) {
-            throw new Error('Token is missing');
-        }
+  // -----------------------------------
+  // REQUEST WRAPPER
+  // -----------------------------------
 
-        return {
-            Authorization: `Bearer ${this.token}`,
-        };
+  private async authorizedPost(
+    url: string,
+    options?: {
+      headers?: Record<string, string>;
+      data?: any;
+    },
+  ) {
+    // Собираем заголовки
+    const headers = {
+      ...this.getAuthHeaders(),
+      ...options?.headers,
+    };
+
+    // Собираем body
+    const body = options?.data;
+
+    // Логируем на консоль перед отправкой
+    console.log('--- REQUEST INFO ---');
+    console.log('URL:', url);
+    console.log('HEADERS:', headers);
+    console.log('BODY:', body);
+    console.log('-------------------');
+
+    // Отправляем POST
+    let response = await this.request.post(url, {
+      headers,
+      data: body,
+    });
+
+    // token expired
+    if (response.status() === 401) {
+      console.log('TOKEN EXPIRED → RELOGIN');
+
+      await this.login();
+
+      response = await this.request.post(url, {
+        headers: this.getAuthHeaders(),
+        data: options?.data,
+      });
     }
 
-    // -----------------------------------
-    // REQUEST WRAPPER
-    // -----------------------------------
+    return response;
+  }
+  // -----------------------------------
+  // RESET AUTH
+  // -----------------------------------
 
-    private async authorizedPost(
-        url: string,
-        options?: {
-            headers?: Record<string, string>;
-            data?: any;
-        },
-    ) {
-        // Собираем заголовки
-        const headers = {
-            ...this.getAuthHeaders(),
-            ...options?.headers,
-        };
+  async resetAuth() {
+    this.token = null;
 
-        // Собираем body
-        const body = options?.data;
+    await this.login();
 
-        // Логируем на консоль перед отправкой
-        console.log('--- REQUEST INFO ---');
-        console.log('URL:', url);
-        console.log('HEADERS:', headers);
-        console.log('BODY:', body);
-        console.log('-------------------');
+    console.log('AUTH RESET SUCCESS');
+  }
+  // -----------------------------------
+  // GET CATALOG
+  // -----------------------------------
 
-        // Отправляем POST
-        let response = await this.request.post(url, {
-            headers,
-            data: body,
-        });
+  async getCatalog(idAutotechnics: number) {
+    const response = await this.authorizedPost(
+      `/api/Car/Catalog/${idAutotechnics}`,
+    );
 
-        // token expired
-        if (response.status() === 401) {
-            console.log('TOKEN EXPIRED → RELOGIN');
-
-            await this.login();
-
-            response = await this.request.post(url, {
-                headers: this.getAuthHeaders(),
-                data: options?.data,
-            });
-        }
-
-        return response;
-    }
-    // -----------------------------------
-    // RESET AUTH
-    // -----------------------------------
-
-    async resetAuth() {
-        this.token = null;
-
-        await this.login();
-
-        console.log('AUTH RESET SUCCESS');
-    }
-    // -----------------------------------
-    // GET CATALOG
-    // -----------------------------------
-
-    async getCatalog(idAutotechnics: number) {
-        const response = await this.authorizedPost(
-            `/api/Car/Catalog/${idAutotechnics}`,
-        );
-
-        if (!response.ok()) {
-            throw new Error(
-                `Catalog error: ${response.status()}`
-            );
-        }
-
-        return await response.json();
+    if (!response.ok()) {
+      throw new Error(`Catalog error: ${response.status()}`);
     }
 
-    // -----------------------------------
-    // GET ITEMS CATALOG
-    // -----------------------------------
+    return await response.json();
+  }
 
-    async getItemsCatalog(
-        typeId: number,
-        groupId: number,
-    ) {
-        const response = await this.authorizedPost(
-            `/api/Car/CatalogItems/?typeId=${typeId}&groupId=${groupId}`,
-        );
+  // -----------------------------------
+  // GET ITEMS CATALOG
+  // -----------------------------------
 
-        console.log('STATUS:', response.status());
+  async getItemsCatalog(
+    typeId: number,
+    groupId: number,
+  ): Promise<ResponseParserItemsCatalogDto[]> {
+    const response = await this.authorizedPost(
+      `/api/Car/CatalogItems/?typeId=${typeId}&groupId=${groupId}`,
+    );
 
-        if (!response.ok()) {
-            console.log(await response.text());
+    console.log('STATUS:', response.status());
 
-            throw new Error(
-                `Items error: ${response.status()}`
-            );
-        }
+    if (!response.ok()) {
+      console.log(await response.text());
 
-        const data = await response.json();
-
-        if (!Array.isArray(data)) {
-            throw new Error(
-                'Invalid catalog response format',
-            );
-        }
-
-        return data;
+      throw new Error(`Items error: ${response.status()}`);
     }
 
-    // -----------------------------------
-    // GET ITEM DETAILS
-    // -----------------------------------
-   
-    async getItemDetails(itemNo: string): Promise<ResponseProductDetailDto> {
-        const response = await this.authorizedPost(
-            `/api/Items/ItemCard`,
-            {
-                data: JSON.stringify(itemNo),
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            },
-        );
-        if (!response.ok()) {
-            throw new Error(
-                `Item details error: ${response.status()}`
-            );
-        }
+    const data = await response.json();
 
-        return await response.json();
+    if (!Array.isArray(data)) {
+      throw new Error('Invalid catalog response format');
     }
-    // -----------------------------------
-    // GET LIST ITEM OEM
-    // -----------------------------------
 
-    async getListItemOem(itemNo: string): Promise<ResponseOemByItemDto[]> {
-        const response = await this.authorizedPost(
-            'api/Catalog/ItemOE',
-            {
-                data: JSON.stringify(itemNo),
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            }
-        );
-        if (!response.ok()) {
-            throw new Error(
-                `Item OEM error: ${response.status()}`
-            );
-        }
+    return data;
+  }
 
-        return await response.json();
+  // -----------------------------------
+  // GET ITEM DETAILS
+  // -----------------------------------
+
+  async getItemDetails(itemNo: string): Promise<ResponseProductDetailDto> {
+    const response = await this.authorizedPost(`/api/Items/ItemCard`, {
+      data: JSON.stringify(itemNo),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok()) {
+      throw new Error(`Item details error: ${response.status()}`);
     }
+
+    return await response.json();
+  }
+  // -----------------------------------
+  // GET LIST ITEM OEM
+  // -----------------------------------
+
+  async getListItemOem(itemNo: string): Promise<ResponseOemByItemDto[]> {
+    const response = await this.authorizedPost('api/Catalog/ItemOE', {
+      data: JSON.stringify(itemNo),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok()) {
+      throw new Error(`Item OEM error: ${response.status()}`);
+    }
+
+    return await response.json();
+  }
 }
