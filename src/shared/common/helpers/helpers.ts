@@ -22,7 +22,7 @@ export const normalizeStock = (
   currentCity: string,
 ): ResponseStockDto[] => {
   const parser: ParsedStock = funcParsed(stock);
-
+console.log(parser)
   return parser.Stock.reduce((acc: ResponseStockDto[], item: Stock) => {
     const quantity = Number(item.Q);
 
@@ -54,15 +54,15 @@ export const normalizeStock = (
       return acc;
     }
 
-    if (item.R) {
-      acc.push({
-        isStock: false,
-        quantity: item.R,
-        statusDelivery: 'reserved',
-      });
+    // if (item.R) {
+    //   acc.push({
+    //     isStock: false,
+    //     quantity: item.R,
+    //     statusDelivery: 'reserved',
+    //   });
 
-      return acc;
-    }
+    //   return acc;
+    // }
 
     acc.push({
       isStock: false,
