@@ -140,3 +140,186 @@ model ListOEMByItem {
   @@index([itemNo])
   @@index([code])
 }
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  lastName String
+  firstName String?
+  birthDate DateTime?
+  nickname String @unique
+
+  email String @unique
+  emailVerified Boolean @default(false)
+  lastLoginAt DateTime?
+  emailVerificationTokenHash String?
+
+  passwordHash String
+  resetPasswordTokenHash String?
+  resetPasswordExp DateTime?
+
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  avatarUrl String?
+  phone String? @unique
+
+  role Role @default(USER)
+
+  cart Cart?
+  addresses Address[]
+  favorites Favorite[]
+  orders    Order[]
+  reviews   Review[]
+  history   History[]
+}
+
+model Address {
+  id         Int    @id @default(autoincrement())
+
+  country    String
+  city       String
+  street     String
+  house      String
+  apartment  String?
+
+  postalCode String?
+
+  isDefault  Boolean @default(false)
+
+  userId     Int
+  user       User @relation(fields: [userId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Favorite {
+  id        Int @id @default(autoincrement())
+
+  userId    Int
+  user      User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  productId String
+
+  @@unique([userId, productId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id         Int @id @default(autoincrement())
+
+  totalPrice Decimal @db.Decimal(10, 2)
+
+  status     OrderStatus @default(PENDING)
+
+  userId     Int
+  user       User @relation(fields: [userId], references: [id])
+
+  items OrderItem[]
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model OrderItem {
+  id Int @id @default(autoincrement())
+
+  orderId Int
+  order Order @relation(fields: [orderId], references: [id])
+
+  productId String
+
+  title String
+
+  quantity Int
+
+  price Decimal @db.Decimal(10,2)
+
+  imageUrl String?
+}
+
+model Review {
+  id        Int @id @default(autoincrement())
+
+  rating    Int?
+  comment   String?
+  productId String?
+
+  userId    Int
+  user      User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+enum HistoryAction {
+  LOGIN
+  LOGOUT
+  ADD_TO_CART
+  REMOVE_FROM_CART
+  CREATE_ORDER
+  CANCEL_ORDER
+}
+
+model History {
+  id        Int @id @default(autoincrement())
+
+  action    HistoryAction
+  metadata  Json?
+
+  userId    Int
+  user      User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Cart {
+  id Int @id @default(autoincrement())
+
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id])
+
+  items CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CartItem {
+  id Int @id @default(autoincrement())
+
+  cartId Int
+  cart Cart @relation(fields: [cartId], references: [id])
+
+  productId String
+
+  title String
+
+  quantity Int @default(1)
+
+  price Decimal @db.Decimal(10,2)
+
+  imageUrl String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([cartId, productId])
+}
+
