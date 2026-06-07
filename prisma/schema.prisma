@@ -231,6 +231,13 @@ model Order {
   userId     Int
   user       User @relation(fields: [userId], references: [id])
 
+  deliveryCountry String
+  deliveryCity String
+  deliveryStreet String
+  deliveryHouse String
+  deliveryApartment String?
+  deliveryPostalCode String?
+
   items OrderItem[]
 
   createdAt  DateTime @default(now())
