@@ -1,12 +1,19 @@
 import { Module } from '@nestjs/common';
-import { CarModelsModule } from './cars/car_models/car_models.module';
-import { CarBrandsModule } from './cars/car_brands/car_brands.module';
+import { CarModelsModule } from './catalog/models/models.module';
+import { CarBrandsModule } from './catalog/brands/brands.module';
 import { CoreModule } from './core/core.module';
-import { CarModificationModule } from './cars/car_modification/car_modification.module';
-import { ParserModule } from './parser/parser.module';
-import { CatalogModule } from './cars/catalog/catalog.module';
-import { ItemsCatalogModule } from './cars/item_catalog/item_catalog.module';
-import { OemByItemModule } from './cars/oem_by_item/oem_by_item.module';
+import { CarModificationModule } from './catalog/modification/modification.module';
+import { ParserModule } from './integrations/parser/parser.module';
+import { CatalogModule } from './catalog/categories/categories.module';
+import { ProductModule } from './catalog/products/products.module';
+import { OemByItemModule } from './catalog/oem/oem.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { AddressModule } from './users/address/address.module';
+import { FavoriteModule } from './favorite/favorite.module';
+import { OrderModule } from './order/order.module';
+import { CartModule } from './cart/cart.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -16,8 +23,15 @@ import { OemByItemModule } from './cars/oem_by_item/oem_by_item.module';
     CarModificationModule,
     ParserModule,
     CatalogModule,
-    ItemsCatalogModule,
+    ProductModule,
     OemByItemModule,
+    UsersModule,
+    AuthModule,
+    AddressModule,
+    FavoriteModule,
+    OrderModule,
+    CartModule,
+    ReviewModule,
   ],
   controllers: [],
   providers: [],

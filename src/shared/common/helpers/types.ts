@@ -27,3 +27,9 @@ export interface Stock {
 export type ParsedStock = {
   Stock: Stock[];
 };
+
+
+export enum Role {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}

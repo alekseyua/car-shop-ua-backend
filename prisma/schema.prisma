@@ -160,6 +160,7 @@ model User {
   emailVerificationTokenHash String?
 
   passwordHash String
+  refreshTokenHash String?
   resetPasswordTokenHash String?
   resetPasswordExp DateTime?
 
@@ -225,6 +226,7 @@ model Order {
   id         Int @id @default(autoincrement())
 
   totalPrice Decimal @db.Decimal(10, 2)
+  orderNumber String @unique
 
   status     OrderStatus @default(PENDING)
 
@@ -264,7 +266,7 @@ model OrderItem {
 model Review {
   id        Int @id @default(autoincrement())
 
-  rating    Int?
+  rating    Int
   comment   String?
   productId String?
 

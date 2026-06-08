@@ -1,0 +1,41 @@
+import { Controller, Get, Query } from '@nestjs/common';
+import { ModelsService } from './models.service';
+import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiQuery, getSchemaPath } from '@nestjs/swagger';
+import { QueryCarModelDto } from './dto/query-car_model.dt';
+import { MetaDto } from 'src/shared/common/pagination/dto/meta.dto';
+import { ResponseCarModelDto } from './dto/response-car_model.dto';
+import { PaginationResponse } from 'src/shared/common/pagination/dto/paginated-response.dto';
+
+@Controller('car-models')
+export class ModelsController {
+  constructor(private readonly ModelsService: ModelsService) { }
+
+  @ApiOperation({
+    summary: 'Получить список моделей автомобилей',
+    description: 'Возвращает все доступные модели автомобилей',
+  })
+
+  @ApiExtraModels(ResponseCarModelDto)
+  @ApiExtraModels(MetaDto)
+  @ApiOkResponse({
+    description: 'список модификаций автомобиля по ID модели успешно получен',
+    schema: {
+      properties: {
+        data: {
+          type: 'array',
+          items: {
+            $ref: getSchemaPath(ResponseCarModelDto)
+          }
+        },
+        meta: {
+          $ref: getSchemaPath(MetaDto)
+        }
+      }
+    }
+  })
+  @Get()
+  findAll(@Query() dto: QueryCarModelDto):Promise<PaginationResponse<ResponseCarModelDto>> {
+    return this.ModelsService.findAll(dto);
+  }
+
+}

@@ -1,5 +1,6 @@
 import { adminConfig } from 'src/core/config/admin.config';
 import { ParsedStock, ResponseStockDto, Stock } from './types';
+import { randomUUID } from 'crypto';
 
 export const delay = (ms = 1000): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -76,3 +77,8 @@ console.log(parser)
 
 export const markupPercentPrice = (price: number): number =>
   price + (price * Math.round(adminConfig.markupPercent)) / 100;
+
+
+export const generateOrderNumber = () => {
+  return `ORD-${Date.now()}-${randomUUID().slice(0, 8)}`;
+};
