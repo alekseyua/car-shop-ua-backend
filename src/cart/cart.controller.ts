@@ -1,34 +1,93 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { Request } from 'express';
+
 import { CartService } from './cart.service';
-import { CreateCartDto } from './dto/create-cart.dto';
-import { UpdateCartDto } from './dto/update-cart.dto';
+import { AddToCartDto } from './dto/add-cart.dto';
+import { CheckoutDto } from './dto/query-cart.dto';
+import { UpdateCartQuantityDto } from './dto/update-cart.dto';
+
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from 'src/auth/decorators/roles.decorator';
 
 @Controller('cart')
+@UseGuards(JwtAuthGuard)
 export class CartController {
-  constructor(private readonly cartService: CartService) {}
-
-  @Post()
-  create(@Body() createCartDto: CreateCartDto) {
-    return this.cartService.create(createCartDto);
-  }
+  constructor(
+    private readonly cartService: CartService,
+  ) { }
 
   @Get()
-  findAll() {
-    return this.cartService.findAll();
+  
+  getCart(@CurrentUser() user: Express.User) {
+    const userId = user.id;
+    return this.cartService.getCart(
+      userId,
+    );
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.cartService.findOne(+id);
+  @Post('items')
+  addItem(
+    @CurrentUser() user: Express.User,
+    @Body() dto: AddToCartDto,
+  ) {
+    return this.cartService.addItem(
+      user.id,
+      dto,
+    );
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCartDto: UpdateCartDto) {
-    return this.cartService.update(+id, updateCartDto);
+  @Patch('items/:id')
+  updateQuantity(
+    @CurrentUser() user: Express.User,
+    @Param('id', ParseIntPipe)
+    itemId: number,
+    @Body() dto: UpdateCartQuantityDto,
+  ) {
+    return this.cartService.updateQuantity(
+      user.id,
+      itemId,
+      dto.quantity,
+    );
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.cartService.remove(+id);
+  @Delete('items/:id')
+  removeItem(
+    @CurrentUser() user: Express.User,
+    @Param('id', ParseIntPipe)
+    itemId: number,
+  ) {
+    return this.cartService.removeItem(
+      user.id,
+      itemId,
+    );
+  }
+
+  @Delete()
+  clearCart(@CurrentUser() user: Express.User) {
+    return this.cartService.clearCart(
+      user.id,
+    );
+  }
+
+  @Post('checkout')
+  checkout(
+    @CurrentUser() user: Express.User,
+    @Body() dto: CheckoutDto,
+  ) {
+    return this.cartService.createFromCart(
+      user.id,
+      dto,
+    );
   }
 }

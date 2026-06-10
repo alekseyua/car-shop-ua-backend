@@ -1,34 +1,69 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+
+import { Request } from 'express';
+
 import { FavoriteService } from './favorite.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateFavoriteDto } from './dto/create-favorite.dto';
-import { UpdateFavoriteDto } from './dto/update-favorite.dto';
+import { CurrentUser } from 'src/auth/decorators/roles.decorator';
 
-@Controller('favorite')
+@Controller('favorites')
+@UseGuards(JwtAuthGuard)
 export class FavoriteController {
-  constructor(private readonly favoriteService: FavoriteService) {}
-
-  @Post()
-  create(@Body() createFavoriteDto: CreateFavoriteDto) {
-    return this.favoriteService.create(createFavoriteDto);
-  }
+  constructor(
+    private readonly favoriteService: FavoriteService,
+  ) { }
 
   @Get()
-  findAll() {
-    return this.favoriteService.findAll();
+  findAll(
+        @CurrentUser() user: Express.User,
+  ) {
+    return this.favoriteService.findAll(
+      user.id,
+    );
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.favoriteService.findOne(+id);
+  @Post()
+  create(
+    @CurrentUser() user: Express.User,
+    @Body() dto: CreateFavoriteDto,
+  ) {
+    return this.favoriteService.create(
+      user.id,
+      dto.productId,
+    );
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFavoriteDto: UpdateFavoriteDto) {
-    return this.favoriteService.update(+id, updateFavoriteDto);
+  @Delete(':productId')
+  remove(
+    @CurrentUser() user: Express.User,
+    @Param('productId')
+    productId: string,
+  ) {
+    return this.favoriteService.remove(
+      user.id,
+      productId,
+    );
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.favoriteService.remove(+id);
+  @Get('check/:productId')
+  isFavorite(
+    @CurrentUser() user: Express.User,
+    @Param('productId')
+    productId: string,
+  ) {
+    return this.favoriteService.isFavorite(
+      user.id,
+      productId,
+    );
   }
 }
