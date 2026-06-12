@@ -282,10 +282,23 @@ model Review {
 enum HistoryAction {
   LOGIN
   LOGOUT
+
   ADD_TO_CART
   REMOVE_FROM_CART
+  UPDATE_CART
+  DELETE_CART
+  CLEAR_CART
+
+  ADD_TO_FAVORITES
+  REMOVE_FROM_FAVORITES
+
   CREATE_ORDER
+  PAY_ORDER
   CANCEL_ORDER
+
+  CREATE_REVIEW
+  UPDATE_REVIEW
+  DELETE_REVIEW
 }
 
 model History {
@@ -298,6 +311,9 @@ model History {
   user      User @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 model Cart {

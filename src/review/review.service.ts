@@ -10,6 +10,23 @@ export class ReviewService {
     userId: number,
     dto: CreateReviewDto,
   ) {
+    const hasPurchased =
+      await this.prisma.orderItem.findFirst({
+        where: {
+          productId: dto.productId,
+          order: {
+            userId,
+            status: 'DELIVERED',
+          },
+        },
+      });
+    
+    if (!hasPurchased) {
+      throw new BadRequestException(
+        'You can only review products you have purchased',
+      );
+    }
+
     const exists =
       await this.prisma.review.findUnique({
         where: {
@@ -112,4 +129,6 @@ export class ReviewService {
       totalReviews: stats._count,
     };
   }
+
+  
 }

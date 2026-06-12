@@ -5,10 +5,14 @@ import { PrismaService } from 'src/core/prisma/prisma.service';
 import { AddToCartDto } from './dto/add-cart.dto';
 import { generateOrderNumber } from 'src/shared/common/helpers/helpers';
 import { CheckoutDto } from './dto/query-cart.dto';
+import { HistoryAction } from 'generated/prisma/browser';
+import { HistoryService } from 'src/history/history.service';
 
 @Injectable()
 export class CartService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService
+    , private readonly historyService: HistoryService,
+  ) {}
 
   private async getOrCreateCart(userId: number) {
     let cart = await this.prisma.cart.findUnique({
@@ -23,8 +27,8 @@ export class CartService {
           userId,
         },
       });
+      
     }
-
     return cart;
   }
 
@@ -69,16 +73,33 @@ export class CartService {
       });
 
     if (existing) {
+      const updatedQuantity = existing.quantity + dto.quantity;
+      await this.historyService.create(
+        userId,
+        HistoryAction.UPDATE_CART,
+        {
+          productId: dto.productId,
+          quantity: updatedQuantity,
+        },
+      );
       return this.prisma.cartItem.update({
         where: {
           id: existing.id,
         },
         data: {
-          quantity:
-            existing.quantity + dto.quantity,
+          quantity: updatedQuantity,
         },
       });
     }
+    
+    await this.historyService.create(
+      userId,
+      HistoryAction.ADD_TO_CART,
+      {
+        productId: dto.productId,
+        quantity: dto.quantity,
+      },
+    );
 
     return this.prisma.cartItem.create({
       data: {
@@ -110,7 +131,14 @@ export class CartService {
     if (!item) {
       throw new NotFoundException();
     }
-
+    await this.historyService.create(
+      userId,
+      HistoryAction.UPDATE_CART,
+      {
+        productId: itemId,
+        quantity: quantity,
+      },
+    );
     return this.prisma.cartItem.update({
       where: {
         id: item.id,
@@ -138,7 +166,13 @@ export class CartService {
     if (!item) {
       throw new NotFoundException();
     }
-
+    await this.historyService.create(
+      userId,
+      HistoryAction.REMOVE_FROM_CART,
+      {
+        productId: itemId,
+      },
+    );
     await this.prisma.cartItem.delete({
       where: {
         id: item.id,
@@ -158,7 +192,10 @@ export class CartService {
         cartId: cart.id,
       },
     });
-
+    await this.historyService.create(
+      userId,
+      HistoryAction.CLEAR_CART,
+    );
     return {
       success: true,
     };
@@ -212,6 +249,10 @@ export class CartService {
           items: true,
         },
       });
+      await this.historyService.create(
+        userId,
+        HistoryAction.CREATE_ORDER,
+      );
 
       await tx.cartItem.deleteMany({
         where: {
