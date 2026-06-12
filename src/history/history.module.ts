@@ -7,5 +7,6 @@ import { PrismaModule } from 'src/core/prisma/prisma.module';
   imports: [PrismaModule],
   controllers: [HistoryController],
   providers: [HistoryService],
+  exports: [HistoryService],
 })
 export class HistoryModule {}

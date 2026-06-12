@@ -1,6 +1,4 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateCartDto } from './dto/create-cart.dto';
-import { UpdateCartDto } from './dto/update-cart.dto';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { AddToCartDto } from './dto/add-cart.dto';
 import { generateOrderNumber } from 'src/shared/common/helpers/helpers';
@@ -10,8 +8,9 @@ import { HistoryService } from 'src/history/history.service';
 
 @Injectable()
 export class CartService {
-  constructor(private readonly prisma: PrismaService
-    , private readonly historyService: HistoryService,
+  constructor(
+    private readonly prisma: PrismaService, 
+    private readonly historyService: HistoryService,
   ) {}
 
   private async getOrCreateCart(userId: number) {
