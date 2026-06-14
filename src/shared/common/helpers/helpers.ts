@@ -23,7 +23,6 @@ export const normalizeStock = (
   currentCity: string,
 ): ResponseStockDto[] => {
   const parser: ParsedStock = funcParsed(stock);
-console.log(parser)
   return parser.Stock.reduce((acc: ResponseStockDto[], item: Stock) => {
     const quantity = Number(item.Q);
 
@@ -82,3 +81,10 @@ export const markupPercentPrice = (price: number): number =>
 export const generateOrderNumber = () => {
   return `ORD-${Date.now()}-${randomUUID().slice(0, 8)}`;
 };
+
+export async function generateNickname(
+): Promise<string> {
+    const suffix = Math.floor(1000 + Math.random() * 9000);
+    const nickname = `user_${suffix}`;
+  return nickname;
+}

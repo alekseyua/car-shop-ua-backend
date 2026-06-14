@@ -31,6 +31,18 @@ export class AuthController {
       properties: {
         accessToken: { type: 'string' },
         refreshToken: { type: 'string' },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'number' },
+            email: { type: 'string' },
+            firstName: { type: 'string' },
+            lastName: { type: 'string' },
+            nickname: { type: 'string' },
+            phone: { type: 'string' },
+            avatarUrl: { type: 'string' },
+          },  
+        }
       },
     },
   })

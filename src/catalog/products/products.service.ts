@@ -84,4 +84,34 @@ export class ProductsService {
       throw error;
     }
   }
+
+  // getListTopProducts
+  async getListTopProducts(): Promise<ResponseProductDto[]> {
+    try {
+      const response: any[] =
+        await this.parserService.getTopProducts();
+
+      return response.map((item) => ({
+        itemNo: item.itemNo,
+        brand: item.brand,
+        quantity: item.quantity,
+        description: item.description,
+        searchDescription: item.searchDescription,
+        inStock: item.inStock,
+        firstPic: item.firstPic,
+        criteriaLine: item.criteriaLine,
+        retail: item.retail,
+        price: markupPercentPrice(item.price),
+        salesUoM: item.salesUoM,
+        criterias: item.criterias,
+        longText: item.longText,
+        groupCode: item.groupCode,
+        subGroupCode: item.subGroupCode,
+        stock: normalizeStock(item.stock, adminConfig.autotechsnicsCity),
+      }));
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
 }

@@ -231,4 +231,20 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
 
     return await response.json();
   }
+
+  // -----------------------------------
+  // GET LIST TOP PRODUCTS
+  // -----------------------------------
+  async getTopProducts(): Promise<ResponseParserProductDto[]> {
+    const response = await this.authorizedPost('api/Content/Home',{
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok()) {
+      throw new Error(`Top products error: ${response.status()}`);
+    }
+    const { topOffers } = await response.json();
+    return topOffers;
+  }
 }

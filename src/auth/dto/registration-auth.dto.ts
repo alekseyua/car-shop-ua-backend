@@ -9,9 +9,10 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class RegisterDto {
-    @ApiProperty()
+    @ApiPropertyOptional()
+    @IsOptional()
     @IsString()
-    "lastName": string;
+    "lastName"?: string;
 
     @ApiPropertyOptional()
     @IsOptional()
@@ -25,9 +26,10 @@ export class RegisterDto {
     @IsDateString()
     "birthDate"?: string;
 
-    @ApiProperty()
+    @ApiPropertyOptional()
+    @IsOptional()
     @IsString()
-    "nickname": string;
+    "nickname"?: string;
 
     @ApiProperty()
     @IsEmail()

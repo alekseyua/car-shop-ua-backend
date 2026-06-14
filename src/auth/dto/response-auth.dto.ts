@@ -6,4 +6,5 @@ export class UserResponseDto {
     "lastName": string;
     "avatarUrl"?: string;
     "role": string;
+    "phone"?: string;
 }

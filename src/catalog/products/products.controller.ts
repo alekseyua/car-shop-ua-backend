@@ -29,4 +29,9 @@ export class ProductController {
   findOne(@Param('id') id: string): Promise<ResponseProductDetailDto> {
     return this.ProductsService.findOne(id);
   }
+
+  @Get('products/top')
+  getListTopProducts(): Promise<ResponseProductDto[]> {
+    return this.ProductsService.getListTopProducts();
+  }
 }

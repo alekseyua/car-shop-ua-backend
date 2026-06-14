@@ -6,6 +6,7 @@ import { RegisterDto } from './dto/registration-auth.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login-auth.dto';
+import { generateNickname } from 'src/shared/common/helpers/helpers';
 
 @Injectable()
 export class AuthService {
@@ -37,7 +38,7 @@ export class AuthService {
           ? new Date(dto.birthDate)
           : null,
 
-        nickname: dto.nickname,
+        nickname: dto?.nickname ?? await generateNickname(),
         email: dto.email,
         phone: dto.phone,
 
@@ -73,7 +74,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('User not found');
     }
 
     const isMatch = await bcrypt.compare(
@@ -82,7 +83,7 @@ export class AuthService {
     );
 
     if (!isMatch) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid password');
     }
     const tokens = await this.generateTokens(user.id, user.email);
     const hash = await bcrypt.hash(
@@ -99,7 +100,15 @@ export class AuthService {
       },
     });
 
-    return tokens;
+    return {...tokens, user: {
+      id: user.id,
+      email: user.email,
+      nickname: user.nickname,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phone: user.phone,
+      avatarUrl: user.avatarUrl,
+    }};
   }
 
   async refresh(refreshToken: string) {
@@ -118,7 +127,7 @@ export class AuthService {
       });
 
       if (!user?.refreshTokenHash) {
-        throw new UnauthorizedException();
+        throw new UnauthorizedException('Invalid refresh token');
       }
 
       const isMatch = await bcrypt.compare(
@@ -127,7 +136,7 @@ export class AuthService {
       );
 
       if (!isMatch) {
-        throw new UnauthorizedException();
+        throw new UnauthorizedException('Invalid refresh token');
       }
 
       return this.generateTokens(
@@ -135,7 +144,7 @@ export class AuthService {
         user.email,
       );
     } catch (error) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid refresh token');
     }
   }
 
