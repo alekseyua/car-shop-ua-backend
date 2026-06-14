@@ -23,55 +23,49 @@ export const normalizeStock = (
   currentCity: string,
 ): ResponseStockDto[] => {
   const parser: ParsedStock = funcParsed(stock);
-  return parser.Stock.reduce((acc: ResponseStockDto[], item: Stock) => {
-    const quantity = Number(item.Q);
 
-    if (item.L === currentCity && quantity > 0) {
-      acc.push({
-        isStock: true,
-        quantity,
-        statusDelivery: 'today',
-      });
+  let todayQty = 0;
+  let tomorrowQty = 0;
 
-      return acc;
+  for (const item of parser.Stock) {
+    const quantity = Number(item.Q.replace(/[^\d]/g, ''));
+
+    if (quantity <= 0) continue;
+
+    if (item.L === currentCity) {
+      todayQty += quantity;
+    } else {
+      tomorrowQty += quantity;
     }
+  }
 
-    if (quantity > 0) {
-      const tomorrowIndex = acc.findIndex(
-        (v) => v.statusDelivery === 'tomorrow',
-      );
+  const result: ResponseStockDto[] = [];
 
-      if (tomorrowIndex !== -1) {
-        acc[tomorrowIndex].quantity += quantity;
-      } else {
-        acc.push({
-          isStock: false,
-          quantity,
-          statusDelivery: 'tomorrow',
-        });
-      }
+  if (todayQty > 0) {
+    result.push({
+      isStock: true,
+      quantity: todayQty,
+      statusDelivery: 'today',
+    });
+  }
 
-      return acc;
-    }
+  if (tomorrowQty > 0) {
+    result.push({
+      isStock: false,
+      quantity: tomorrowQty,
+      statusDelivery: 'tomorrow',
+    });
+  }
 
-    // if (item.R) {
-    //   acc.push({
-    //     isStock: false,
-    //     quantity: item.R,
-    //     statusDelivery: 'reserved',
-    //   });
-
-    //   return acc;
-    // }
-
-    acc.push({
+  if (result.length === 0) {
+    result.push({
       isStock: false,
       quantity: 0,
       statusDelivery: 'notAvailable',
     });
+  }
 
-    return acc;
-  }, []);
+  return result;
 };
 
 export const markupPercentPrice = (price: number): number =>
