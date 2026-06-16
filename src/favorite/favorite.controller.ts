@@ -28,7 +28,7 @@ export class FavoriteController {
         @CurrentUser() user: Express.User,
   ) {
     return this.favoriteService.findAll(
-      user.id,
+      user.userId,
     );
   }
 
@@ -38,7 +38,7 @@ export class FavoriteController {
     @Body() dto: CreateFavoriteDto,
   ) {
     return this.favoriteService.create(
-      user.id,
+      user.userId,
       dto.productId,
     );
   }
@@ -50,7 +50,7 @@ export class FavoriteController {
     productId: string,
   ) {
     return this.favoriteService.remove(
-      user.id,
+      user.userId,
       productId,
     );
   }
@@ -62,7 +62,7 @@ export class FavoriteController {
     productId: string,
   ) {
     return this.favoriteService.isFavorite(
-      user.id,
+      user.userId,
       productId,
     );
   }

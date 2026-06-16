@@ -28,7 +28,7 @@ export class ReviewController {
     @Body() dto: CreateReviewDto,
   ) {
     return this.reviewService.create(
-      user.id,
+      user.userId,
       dto,
     );
   }
@@ -42,7 +42,7 @@ export class ReviewController {
     @Body() dto: UpdateReviewDto,
   ) {
     return this.reviewService.update(
-      user.id,
+      user.userId,
       productId,
       dto,
     );
@@ -56,7 +56,7 @@ export class ReviewController {
     productId: string,
   ) {
     return this.reviewService.remove(
-      user.id,
+      user.userId,
       productId,
     );
   }

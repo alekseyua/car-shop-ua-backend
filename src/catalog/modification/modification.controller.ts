@@ -5,6 +5,7 @@ import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiQuery, getSchemaPath } 
 import { ResponseCarModificationDto } from './dto/response-car_modification.dto';
 import { MetaDto } from 'src/shared/common/pagination/dto/meta.dto';
 import { ParserService } from 'src/integrations/parser/parser.service';
+import { PaginationResponse } from 'src/shared/common/pagination/dto/paginated-response.dto';
 
 @Controller('car-modification')
 export class ModificationController {
@@ -47,8 +48,8 @@ export class ModificationController {
   })
 
   @Get()
-  findAll(@Query() dto: QueryCarModificationDto) {
-    this.parserService.getCatalog(28435);
+  findAll(@Query() dto: QueryCarModificationDto): Promise<PaginationResponse<ResponseCarModificationDto>> {
+    // this.parserService.getCatalog(28435);
     return this.ModificationService.findAll(dto);
   }
 }

@@ -8,9 +8,9 @@ import {
   Patch,
   Post,
   Req,
+  Request,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
 
 import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-cart.dto';
@@ -19,7 +19,9 @@ import { UpdateCartQuantityDto } from './dto/update-cart.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/roles.decorator';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @Controller('cart')
 @UseGuards(JwtAuthGuard)
 export class CartController {
@@ -28,9 +30,12 @@ export class CartController {
   ) { }
 
   @Get()
-  
-  getCart(@CurrentUser() user: Express.User) {
-    const userId = user.id;
+  getCart(
+    @CurrentUser() user: Express.User
+  ) {
+    console.log({user})
+
+    const userId = user.userId;
     return this.cartService.getCart(
       userId,
     );
@@ -42,7 +47,7 @@ export class CartController {
     @Body() dto: AddToCartDto,
   ) {
     return this.cartService.addItem(
-      user.id,
+      user.userId,
       dto,
     );
   }
@@ -55,7 +60,7 @@ export class CartController {
     @Body() dto: UpdateCartQuantityDto,
   ) {
     return this.cartService.updateQuantity(
-      user.id,
+      user.userId,
       itemId,
       dto.quantity,
     );
@@ -68,7 +73,7 @@ export class CartController {
     itemId: number,
   ) {
     return this.cartService.removeItem(
-      user.id,
+      user.userId,
       itemId,
     );
   }
@@ -76,7 +81,7 @@ export class CartController {
   @Delete()
   clearCart(@CurrentUser() user: Express.User) {
     return this.cartService.clearCart(
-      user.id,
+      user.userId,
     );
   }
 
@@ -86,7 +91,7 @@ export class CartController {
     @Body() dto: CheckoutDto,
   ) {
     return this.cartService.createFromCart(
-      user.id,
+      user.userId,
       dto,
     );
   }

@@ -5,6 +5,7 @@ import { generateOrderNumber } from 'src/shared/common/helpers/helpers';
 import { CheckoutDto } from './dto/query-cart.dto';
 import { HistoryAction } from 'generated/prisma/browser';
 import { HistoryService } from 'src/history/history.service';
+import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
 
 @Injectable()
 export class CartService {
@@ -28,31 +29,37 @@ export class CartService {
       });
       
     }
+    console.log({cart})
     return cart;
   }
 
   async getCart(userId: number) {
-    const cart = await this.getOrCreateCart(userId);
-
-    const result = await this.prisma.cart.findUnique({
-      where: {
-        id: cart.id,
-      },
-      include: {
-        items: true,
-      },
-    });
-
-    const total = result!.items.reduce(
-      (sum, item) =>
-        sum + Number(item.price) * item.quantity,
-      0,
-    );
-
-    return {
-      ...result,
-      total,
-    };
+    try {
+      const cart = await this.getOrCreateCart(userId);
+  
+      const result = await this.prisma.cart.findUnique({
+        where: {
+          id: cart.id,
+        },
+        include: {
+          items: true,
+        },
+      });
+  
+      const total = result!.items.reduce(
+        (sum, item) =>
+          sum + Number(item.price) * item.quantity,
+        0,
+      );
+  
+      return {
+        ...result,
+        total,
+      };
+      
+    } catch (error) {
+      throw error;
+    }
   }
 
   async addItem(

@@ -29,7 +29,7 @@ export class OrdersController {
     @Body() dto: CreateOrderDto,
   ) {
     return this.ordersService.create(
-      req.user.id,
+      req.user.userId,
       dto,
     );
   }
@@ -37,7 +37,7 @@ export class OrdersController {
   @Get()
   findAll(@Req() req) {
     return this.ordersService.findAll(
-      req.user.id,
+      req.user.userId,
     );
   }
 
@@ -48,7 +48,7 @@ export class OrdersController {
   ) {
     return this.ordersService.findOne(
       id,
-      req.user.id,
+      req.user.userId,
     );
   }
 
