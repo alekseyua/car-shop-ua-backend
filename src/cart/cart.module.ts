@@ -4,9 +4,10 @@ import { CartController } from './cart.controller';
 import { PrismaModule } from 'src/core/prisma/prisma.module';
 import { HistoryModule } from 'src/history/history.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { ParserModule } from 'src/integrations/parser/parser.module';
 
 @Module({
-  imports: [PrismaModule, HistoryModule, AuthModule],
+  imports: [PrismaModule, HistoryModule, AuthModule, ParserModule],
   controllers: [CartController],
   providers: [CartService],
 })

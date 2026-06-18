@@ -1,16 +1,18 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { AddToCartDto } from './dto/add-cart.dto';
-import { generateOrderNumber } from 'src/shared/common/helpers/helpers';
+import { generateOrderNumber, markupPercentPrice } from 'src/shared/common/helpers/helpers';
 import { CheckoutDto } from './dto/query-cart.dto';
 import { HistoryAction } from 'generated/prisma/browser';
 import { HistoryService } from 'src/history/history.service';
 import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
+import { ParserService } from 'src/integrations/parser/parser.service';
 
 @Injectable()
 export class CartService {
   constructor(
     private readonly prisma: PrismaService, 
+    private readonly parser: ParserService,
     private readonly historyService: HistoryService,
   ) {}
 
@@ -88,7 +90,7 @@ export class CartService {
           quantity: updatedQuantity,
         },
       );
-      return this.prisma.cartItem.update({
+      return await this.prisma.cartItem.update({
         where: {
           id: existing.id,
         },
@@ -106,14 +108,14 @@ export class CartService {
         quantity: dto.quantity,
       },
     );
-
-    return this.prisma.cartItem.create({
+    const product = await this.parser.getItemDetails(dto.productId);
+    return await this.prisma.cartItem.create({
       data: {
         cartId: cart.id,
         productId: dto.productId,
-        title: dto.title,
-        price: dto.price,
-        imageUrl: dto.imageUrl,
+        title: product?.item?.description ?? '',
+        price: markupPercentPrice(product?.item?.price ?? 0),
+        imageUrl: product?.item?.firstPic,
         quantity: dto.quantity,
       },
     });
