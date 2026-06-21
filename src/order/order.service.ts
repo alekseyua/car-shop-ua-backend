@@ -33,7 +33,7 @@ export class OrderService {
 
           items: {
             create: dto.items.map((item) => ({
-              productId: item.productId,
+              itemNo: item.itemNo,
               title: item.title,
               quantity: item.quantity,
               price: item.price,

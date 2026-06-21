@@ -22,14 +22,14 @@ export class FavoriteService {
 
   async create(
     userId: number,
-    productId: string,
+    itemNo: string,
   ) {
     const exists =
       await this.prisma.favorite.findUnique({
         where: {
-          userId_productId: {
+          userId_itemNo: {
             userId,
-            productId,
+            itemNo,
           },
         },
       });
@@ -41,7 +41,7 @@ export class FavoriteService {
     return this.prisma.favorite.create({
       data: {
         userId,
-        productId,
+        itemNo,
       },
     });
   }
@@ -56,14 +56,14 @@ export class FavoriteService {
   
   async isFavorite(
     userId: number,
-    productId: string,
+    itemNo: string,
   ) {
     const favorite =
       await this.prisma.favorite.findUnique({
         where: {
-          userId_productId: {
+          userId_itemNo: {
             userId,
-            productId,
+            itemNo,
           },
         },
       });
@@ -75,13 +75,13 @@ export class FavoriteService {
 
   async remove(
     userId: number,
-    productId: string,
+    itemNo: string,
   ) {
     await this.prisma.favorite.delete({
       where: {
-        userId_productId: {
+        userId_itemNo: {
           userId,
-          productId,
+          itemNo,
         },
       },
     });

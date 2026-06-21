@@ -39,31 +39,31 @@ export class FavoriteController {
   ) {
     return this.favoriteService.create(
       user.userId,
-      dto.productId,
+      dto.itemNo,
     );
   }
 
-  @Delete(':productId')
+  @Delete(':itemNo')
   remove(
     @CurrentUser() user: Express.User,
-    @Param('productId')
-    productId: string,
+    @Param('itemNo')
+    itemNo: string,
   ) {
     return this.favoriteService.remove(
       user.userId,
-      productId,
+      itemNo,
     );
   }
 
-  @Get('check/:productId')
+  @Get('check/:itemNo')
   isFavorite(
     @CurrentUser() user: Express.User,
-    @Param('productId')
-    productId: string,
+    @Param('itemNo')
+    itemNo: string,
   ) {
     return this.favoriteService.isFavorite(
       user.userId,
-      productId,
+      itemNo,
     );
   }
 }

@@ -11,13 +11,13 @@ export class ReviewController {
     private readonly reviewService: ReviewService,
   ) { }
 
-  @Get('product/:productId')
+  @Get('product/:itemNo')
   findByProduct(
-    @Param('productId')
-    productId: string,
+    @Param('itemNo')
+    itemNo: string,
   ) {
     return this.reviewService.findByProduct(
-      productId,
+      itemNo,
     );
   }
 
@@ -34,30 +34,30 @@ export class ReviewController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Patch(':productId')
+  @Patch(':itemNo')
   update(
     @CurrentUser() user: Express.User,
-    @Param('productId')
-    productId: string,
+    @Param('itemNo')
+    itemNo: string,
     @Body() dto: UpdateReviewDto,
   ) {
     return this.reviewService.update(
       user.userId,
-      productId,
+      itemNo,
       dto,
     );
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete(':productId')
+  @Delete(':itemNo')
   remove(
     @CurrentUser() user: Express.User,
-    @Param('productId')
-    productId: string,
+    @Param('itemNo')
+    itemNo: string,
   ) {
     return this.reviewService.remove(
       user.userId,
-      productId,
+      itemNo,
     );
   }
 } 

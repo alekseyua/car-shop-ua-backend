@@ -208,9 +208,9 @@ model Favorite {
 
   createdAt DateTime @default(now())
 
-  productId String
+  itemNo String
 
-  @@unique([userId, productId])
+  @@unique([userId, itemNo])
 }
 
 enum OrderStatus {
@@ -252,7 +252,7 @@ model OrderItem {
   orderId Int
   order Order @relation(fields: [orderId], references: [id])
 
-  productId String
+  itemNo String
 
   title String
 
@@ -268,15 +268,15 @@ model Review {
 
   rating    Int
   comment   String?
-  productId String?
+  itemNo String?
 
   userId    Int
   user      User @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now())
 
-  @@unique([userId, productId])
-  @@index([productId])
+  @@unique([userId, itemNo])
+  @@index([itemNo])
 }
 
 enum HistoryAction {
@@ -334,7 +334,7 @@ model CartItem {
   cartId Int
   cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
-  productId String
+  itemNo String
 
   title String
 
@@ -346,6 +346,6 @@ model CartItem {
 
   createdAt DateTime @default(now())
 
-  @@unique([cartId, productId])
+  @@unique([cartId, itemNo])
 }
 

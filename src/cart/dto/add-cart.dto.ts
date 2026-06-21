@@ -8,7 +8,7 @@ import {
 
 export class AddToCartDto {
     @IsString()
-    "productId": string;
+    "itemNo": string;
     @IsInt()
     @Min(1)
     "quantity": number;

@@ -8,7 +8,7 @@ import {
 
 export class CreateReviewDto {
     @IsString()
-    "productId": string;
+    "itemNo": string;
 
     @IsInt()
     @Min(1)

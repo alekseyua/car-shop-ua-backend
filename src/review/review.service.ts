@@ -13,7 +13,7 @@ export class ReviewService {
     const hasPurchased =
       await this.prisma.orderItem.findFirst({
         where: {
-          productId: dto.productId,
+          itemNo: dto.itemNo,
           order: {
             userId,
             status: 'DELIVERED',
@@ -30,9 +30,9 @@ export class ReviewService {
     const exists =
       await this.prisma.review.findUnique({
         where: {
-          userId_productId: {
+          userId_itemNo: {
             userId,
-            productId: dto.productId,
+            itemNo: dto.itemNo,
           },
         },
       });
@@ -46,7 +46,7 @@ export class ReviewService {
     return this.prisma.review.create({
       data: {
         userId,
-        productId: dto.productId,
+        itemNo: dto.itemNo,
         rating: dto.rating,
         comment: dto.comment,
       },
@@ -55,14 +55,14 @@ export class ReviewService {
 
   async update(
     userId: number,
-    productId: string,
+    itemNo: string,
     dto: UpdateReviewDto,
   ) {
     return this.prisma.review.update({
       where: {
-        userId_productId: {
+        userId_itemNo: {
           userId,
-          productId,
+          itemNo,
         },
       },
       data: dto,
@@ -71,13 +71,13 @@ export class ReviewService {
 
   async remove(
     userId: number,
-    productId: string,
+    itemNo: string,
   ) {
     await this.prisma.review.delete({
       where: {
-        userId_productId: {
+        userId_itemNo: {
           userId,
-          productId,
+          itemNo,
         },
       },
     });
@@ -88,11 +88,11 @@ export class ReviewService {
   }
 
   async findByProduct(
-    productId: string,
+    itemNo: string,
   ) {
     return this.prisma.review.findMany({
       where: {
-        productId,
+        itemNo,
       },
       include: {
         user: {
@@ -110,12 +110,12 @@ export class ReviewService {
   }
 
   async getStats(
-    productId: string,
+    itemNo: string,
   ) {
     const stats =
       await this.prisma.review.aggregate({
         where: {
-          productId,
+          itemNo,
         },
         _avg: {
           rating: true,

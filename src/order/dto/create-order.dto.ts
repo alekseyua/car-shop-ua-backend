@@ -10,7 +10,7 @@ import { Type } from 'class-transformer';
 
 class CreateOrderItemDto {
     @IsString()
-    "productId": string;
+    "itemNo": string;
 
     @IsString()
     "title": string;

@@ -19,7 +19,7 @@ import { UpdateCartQuantityDto } from './dto/update-cart.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/roles.decorator';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @Controller('cart')
@@ -33,8 +33,6 @@ export class CartController {
   getCart(
     @CurrentUser() user: Express.User
   ) {
-    console.log({user})
-
     const userId = user.userId;
     return this.cartService.getCart(
       userId,
@@ -52,7 +50,10 @@ export class CartController {
     );
   }
 
-  @Patch('items/:id')
+  @ApiOkResponse({
+    description: 'Quantity update'
+  })
+  @Patch('update-quantity/:id')
   updateQuantity(
     @CurrentUser() user: Express.User,
     @Param('id', ParseIntPipe)

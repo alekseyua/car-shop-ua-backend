@@ -53,7 +53,7 @@ export class CartService {
           sum + Number(item.price) * item.quantity,
         0,
       );
-  
+      console.log(result)
       return {
         ...result,
         total,
@@ -73,9 +73,9 @@ export class CartService {
     const existing =
       await this.prisma.cartItem.findUnique({
         where: {
-          cartId_productId: {
+          cartId_itemNo: {
             cartId: cart.id,
-            productId: dto.productId,
+            itemNo: dto.itemNo,
           },
         },
       });
@@ -86,7 +86,7 @@ export class CartService {
         userId,
         HistoryAction.UPDATE_CART,
         {
-          productId: dto.productId,
+          itemNo: dto.itemNo,
           quantity: updatedQuantity,
         },
       );
@@ -104,15 +104,15 @@ export class CartService {
       userId,
       HistoryAction.ADD_TO_CART,
       {
-        productId: dto.productId,
+        itemNo: dto.itemNo,
         quantity: dto.quantity,
       },
     );
-    const product = await this.parser.getItemDetails(dto.productId);
+    const product = await this.parser.getItemDetails(dto.itemNo);
     return await this.prisma.cartItem.create({
       data: {
         cartId: cart.id,
-        productId: dto.productId,
+        itemNo: dto.itemNo,
         title: product?.item?.description ?? '',
         price: markupPercentPrice(product?.item?.price ?? 0),
         imageUrl: product?.item?.firstPic,
@@ -143,7 +143,7 @@ export class CartService {
       userId,
       HistoryAction.UPDATE_CART,
       {
-        productId: itemId,
+        itemNo: itemId,
         quantity: quantity,
       },
     );
@@ -178,7 +178,7 @@ export class CartService {
       userId,
       HistoryAction.REMOVE_FROM_CART,
       {
-        productId: itemId,
+        itemNo: itemId,
       },
     );
     await this.prisma.cartItem.delete({
@@ -245,7 +245,7 @@ export class CartService {
 
           items: {
             create: cart.items.map((item) => ({
-              productId: item.productId,
+              itemNo: item.itemNo,
               title: item.title,
               quantity: item.quantity,
               price: item.price,
