@@ -53,7 +53,6 @@ export class CartService {
           sum + Number(item.price) * item.quantity,
         0,
       );
-      console.log(result)
       return {
         ...result,
         total,
