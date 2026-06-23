@@ -61,7 +61,8 @@ export class AuthController {
       },
     },
   })
-  refresh(@Body('refreshToken') refreshToken: string) {
+  refresh(
+    @Body('refreshToken') refreshToken: string) {
     return this.authService.refresh(refreshToken);
   }
 

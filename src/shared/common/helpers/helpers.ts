@@ -82,3 +82,5 @@ export async function generateNickname(
     const nickname = `user_${suffix}`;
   return nickname;
 }
+
+export const normalizeImagePath = (img: string | []) => typeof img === 'object'? img.map((i:string)=>i.replace('tcd/','tcd-pic/')) :img.replace('tcd/', 'tcd-pic/');

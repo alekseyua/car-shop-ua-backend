@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { AddToCartDto } from './dto/add-cart.dto';
-import { generateOrderNumber, markupPercentPrice } from 'src/shared/common/helpers/helpers';
+import { generateOrderNumber, markupPercentPrice, normalizeImagePath } from 'src/shared/common/helpers/helpers';
 import { CheckoutDto } from './dto/query-cart.dto';
 import { HistoryAction } from 'generated/prisma/browser';
 import { HistoryService } from 'src/history/history.service';
@@ -66,6 +66,7 @@ export class CartService {
   async addItem(
     userId: number,
     dto: AddToCartDto,
+
   ) {
     const cart = await this.getOrCreateCart(userId);
 
@@ -87,6 +88,7 @@ export class CartService {
         {
           itemNo: dto.itemNo,
           quantity: updatedQuantity,
+          statusDelivery: dto.statusDelivery,
         },
       );
       return await this.prisma.cartItem.update({
@@ -105,6 +107,7 @@ export class CartService {
       {
         itemNo: dto.itemNo,
         quantity: dto.quantity,
+        statusDelivery: dto.statusDelivery,
       },
     );
     const product = await this.parser.getItemDetails(dto.itemNo);
@@ -114,15 +117,16 @@ export class CartService {
         itemNo: dto.itemNo,
         title: product?.item?.description ?? '',
         price: markupPercentPrice(product?.item?.price ?? 0),
-        imageUrl: product?.item?.firstPic,
+        imageUrl: normalizeImagePath( product?.item?.firstPic as string) as string,
         quantity: dto.quantity,
+        statusDelivery: dto.statusDelivery,
       },
     });
   }
 
   async updateQuantity(
     userId: number,
-    itemId: number,
+    itemId: string,
     quantity: number,
   ) {
     const cart = await this.getOrCreateCart(userId);
@@ -130,7 +134,7 @@ export class CartService {
     const item =
       await this.prisma.cartItem.findFirst({
         where: {
-          id: itemId,
+          itemNo: itemId,
           cartId: cart.id,
         },
       });
@@ -158,14 +162,14 @@ export class CartService {
 
   async removeItem(
     userId: number,
-    itemId: number,
+    itemId: string,
   ) {
     const cart = await this.getOrCreateCart(userId);
 
     const item =
       await this.prisma.cartItem.findFirst({
         where: {
-          id: itemId,
+          itemNo: itemId,
           cartId: cart.id,
         },
       });

@@ -330,22 +330,16 @@ model Cart {
 
 model CartItem {
   id Int @id @default(autoincrement())
-
   cartId Int
   cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
-
   itemNo String
-
   title String
-
   quantity Int @default(1)
-
   price Decimal @db.Decimal(10,2)
-
   imageUrl String?
+  statusDelivery String
 
   createdAt DateTime @default(now())
-
   @@unique([cartId, itemNo])
 }
 

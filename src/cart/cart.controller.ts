@@ -56,8 +56,7 @@ export class CartController {
   @Patch('update-quantity/:id')
   updateQuantity(
     @CurrentUser() user: Express.User,
-    @Param('id', ParseIntPipe)
-    itemId: number,
+    @Param('id') itemId: string,
     @Body() dto: UpdateCartQuantityDto,
   ) {
     return this.cartService.updateQuantity(
@@ -70,8 +69,7 @@ export class CartController {
   @Delete('items/:id')
   removeItem(
     @CurrentUser() user: Express.User,
-    @Param('id', ParseIntPipe)
-    itemId: number,
+    @Param('id') itemId: string,
   ) {
     return this.cartService.removeItem(
       user.userId,

@@ -129,12 +129,10 @@ export class AuthService {
       if (!user?.refreshTokenHash) {
         throw new UnauthorizedException('Invalid refresh token');
       }
-
       const isMatch = await bcrypt.compare(
         refreshToken,
         user.refreshTokenHash,
       );
-
       if (!isMatch) {
         throw new UnauthorizedException('Invalid refresh token');
       }

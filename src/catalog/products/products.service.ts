@@ -9,6 +9,7 @@ import {
 } from './dto/response-products.dto';
 import {
   markupPercentPrice,
+  normalizeImagePath,
   normalizeStock,
 } from 'src/shared/common/helpers/helpers';
 import { adminConfig } from 'src/core/config/admin.config';
@@ -30,7 +31,7 @@ export class ProductsService {
         description: item.description,
         searchDescription: item.searchDescription,
         inStock: item.inStock,
-        firstPic: item.firstPic,
+        firstPic: normalizeImagePath( item.firstPic as string) as string,
         criteriaLine: item.criteriaLine,
         retail: item.retail,
         price: markupPercentPrice(item.price),
@@ -98,7 +99,7 @@ export class ProductsService {
         description: item.description,
         searchDescription: item.searchDescription,
         inStock: item.inStock,
-        firstPic: item.firstPic,
+        firstPic: normalizeImagePath( item.firstPic as string ) as string,
         criteriaLine: item.criteriaLine,
         retail: item.retail,
         price: markupPercentPrice(item.price),
