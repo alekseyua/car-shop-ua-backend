@@ -15,6 +15,7 @@ import { OrderModule } from './order/order.module';
 import { CartModule } from './cart/cart.module';
 import { ReviewModule } from './review/review.module';
 import { HistoryModule } from './history/history.module';
+import { NovaposhtaModule } from './novaposhta/novaposhta.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { HistoryModule } from './history/history.module';
     CartModule,
     ReviewModule,
     HistoryModule,
+    NovaposhtaModule,
   ],
   controllers: [],
   providers: [],
