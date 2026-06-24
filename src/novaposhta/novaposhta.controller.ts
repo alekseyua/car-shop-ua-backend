@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { NovaposhtaService } from './novaposhta.service';
 import { CreateNovaposhtaDto } from './dto/create-novaposhta.dto';
 import { UpdateNovaposhtaDto } from './dto/update-novaposhta.dto';
@@ -7,10 +7,17 @@ import { UpdateNovaposhtaDto } from './dto/update-novaposhta.dto';
 export class NovaposhtaController {
   constructor(private readonly novaposhtaService: NovaposhtaService) {}
 
-  @Get('getAreas')
+  @Get('get-areas')
   findAll() {
     const data = this.novaposhtaService.findAll();
     return data;
+  }
+
+  @Get('get-sity')
+  findSity(
+    @Query() dto: {}
+  ){
+    const res = this.novaposhtaService.findSity(dto)
   }
 
 }

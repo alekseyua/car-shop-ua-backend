@@ -16,6 +16,7 @@ import { CartModule } from './cart/cart.module';
 import { ReviewModule } from './review/review.module';
 import { HistoryModule } from './history/history.module';
 import { NovaposhtaModule } from './novaposhta/novaposhta.module';
+import { IoredisModule } from './core/ioredis/ioredis.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { NovaposhtaModule } from './novaposhta/novaposhta.module';
     ReviewModule,
     HistoryModule,
     NovaposhtaModule,
+    IoredisModule,
   ],
   controllers: [],
   providers: [],
