@@ -9,7 +9,7 @@ export class NovaposhtaController {
 
   @Get('get-areas')
   findAll() {
-    const data = this.novaposhtaService.findAll();
+    const data = this.novaposhtaService.findRegion();
     return data;
   }
 
@@ -17,7 +17,8 @@ export class NovaposhtaController {
   findSity(
     @Query() dto: {}
   ){
-    const res = this.novaposhtaService.findSity(dto)
+    const res = this.novaposhtaService.findSity(dto);
+    return res;
   }
 
 }
