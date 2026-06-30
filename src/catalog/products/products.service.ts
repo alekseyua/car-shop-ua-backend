@@ -13,10 +13,13 @@ import {
   normalizeStock,
 } from 'src/shared/common/helpers/helpers';
 import { adminConfig } from 'src/core/config/admin.config';
+import { IoredisService } from 'src/core/ioredis/ioredis.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(private parserService: ParserService) {}
+  constructor(private parserService: ParserService,
+    private readonly redis: IoredisService
+  ) {}
 
   async findAll(dto: QueryProductDto): Promise<ResponseProductDto[]> {
     try {
@@ -49,6 +52,7 @@ export class ProductsService {
   // getItemDetails
   async findOne(id: string): Promise<ResponseProductDetailDto> {
     try {
+      // здесь кеш временно для тестов
       const response: ResponseProductDetailDto =
         await this.parserService.getItemDetails(id);
       if (
@@ -63,10 +67,16 @@ export class ProductsService {
       if (!response.item) {
         return response;
       }
+      const cacheProductOneStr = await this.redis.get('product - one'+id);
+      if(cacheProductOneStr){
+        const cacheProductOne = JSON.parse(cacheProductOneStr);
+        return cacheProductOne;
+      }
       const normolizeReplaces = response.replaces?.map((item: ProductItem) => ({
         ...item,
         price: markupPercentPrice(item.price),
       }));
+
       const res: ResponseProductDetailDto = {
         ...response,
         item: {
@@ -79,6 +89,9 @@ export class ProductsService {
         },
         replaces: normolizeReplaces ?? null,
       };
+      if(res){
+        this.redis.set('product-one'+id, JSON.stringify(res))
+      }
       return res;
     } catch (error) {
       console.log(error);
@@ -89,17 +102,22 @@ export class ProductsService {
   // getListTopProducts
   async getListTopProducts(): Promise<ResponseProductDto[]> {
     try {
+      const cachTopProductsStr = await this.redis.get('top-products');
+      if (cachTopProductsStr){
+        console.log('Top products from cache')
+        const cachTopProducts = JSON.parse(cachTopProductsStr);
+        return cachTopProducts;
+      }
       const response: any[] =
         await this.parserService.getTopProducts();
-
-      return response.map((item) => ({
+      const serializeTopProducts = response.map((item) => ({
         itemNo: item.itemNo,
         brand: item.brand,
         quantity: item.quantity,
         description: item.description,
         searchDescription: item.searchDescription,
         inStock: item.inStock,
-        firstPic: normalizeImagePath( item.firstPic as string ) as string,
+        firstPic: normalizeImagePath(item.firstPic as string) as string,
         criteriaLine: item.criteriaLine,
         retail: item.retail,
         price: markupPercentPrice(item.price),
@@ -109,7 +127,11 @@ export class ProductsService {
         groupCode: item.groupCode,
         subGroupCode: item.subGroupCode,
         stock: normalizeStock(item.stock, adminConfig.autotechsnicsCity),
-      }));
+      }))
+      if(!response){
+        this.redis.set('top-products', JSON.stringify(serializeTopProducts));
+      }
+      return serializeTopProducts;
     } catch (error) {
       console.log(error);
       throw error;
