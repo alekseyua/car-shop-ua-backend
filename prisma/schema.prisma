@@ -233,12 +233,21 @@ model Order {
   userId     Int
   user       User @relation(fields: [userId], references: [id])
 
-  deliveryCountry String
   deliveryCity String
-  deliveryStreet String
-  deliveryHouse String
+  deliveryPhone String
+  deliveryEmail String?
+  deliveryLastname String
+  deliveryFirstname String?
+  deliveryMiddlename String?
+  deliveryComment String?
+  deliveryVin String?
+  deliveryPoint String?
+  deliveryPointRef String?
+
+  deliveryStreet String?
+  deliveryHouse String?
   deliveryApartment String?
-  deliveryPostalCode String?
+
 
   items OrderItem[]
 

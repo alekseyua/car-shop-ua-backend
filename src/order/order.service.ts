@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { generateOrderNumber } from 'src/shared/common/helpers/helpers';
 import { OrderStatus } from 'generated/prisma/enums';
@@ -9,30 +8,62 @@ import { OrderStatus } from 'generated/prisma/enums';
 export class OrderService {
 
   constructor(private readonly prisma: PrismaService) { }
-
+/**
+ * пока логика такая что создаетс заказ  исход из элементов в корзине, 
+ * но в дальнейшем нужно сделать чекбоксы и выбирать нужные элементы для заказа, а не все из корзины
+ * @param userId 
+ * @param dto 
+ * @returns 
+ */
     async create(userId: number, dto: CreateOrderDto) {
+
       const totalPrice = dto.items.reduce(
         (sum, item) => sum + item.price * item.quantity,
         0,
       );
+      const cart = await this.prisma.cart.findUnique({
+        where: {
+          userId,
+        }
+      })
 
+      const cartItems = await this.prisma.cartItem.findMany({
+        where: {
+          cartId: cart?.id,
+        }
+      })
+
+      if (cartItems.length === 0) {
+        throw new NotFoundException('Cart is empty');
+      }
+
+      
       const orderNumber = generateOrderNumber();
 
-      return this.prisma.order.create({
+      const order = await this.prisma.order.create({
         data: {
           userId,
           totalPrice,
           orderNumber: orderNumber,
 
-          deliveryCountry: dto.deliveryCountry,
           deliveryCity: dto.deliveryCity,
+          deliveryPhone: dto.deliveryPhone,
+          deliveryEmail: dto.deliveryEmail,
+          deliveryLastname: dto.deliveryLastname,
+          deliveryFirstname: dto.deliveryFirstname,
+          deliveryMiddlename: dto.deliveryMiddlename,
+          deliveryComment: dto.deliveryComment,
+          deliveryVin: dto.deliveryVin,
+          deliveryPoint: dto.deliveryPoint,
+          deliveryPointRef: dto.deliveryPointRef,
+
           deliveryStreet: dto.deliveryStreet,
           deliveryHouse: dto.deliveryHouse,
           deliveryApartment: dto.deliveryApartment,
-          deliveryPostalCode: dto.deliveryPostalCode,
+
 
           items: {
-            create: dto.items.map((item) => ({
+            create: cartItems.map((item) => ({
               itemNo: item.itemNo,
               title: item.title,
               quantity: item.quantity,
@@ -45,7 +76,14 @@ export class OrderService {
           items: true,
         },
       });
-
+      if (order && cart?.id) {
+        await this.prisma.cartItem.deleteMany({
+          where: {
+            cartId: cart.id,
+          },
+        });
+      }
+      return order;
   }
 
   async findAll(userId: number) {

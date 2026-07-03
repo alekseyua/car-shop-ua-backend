@@ -5,7 +5,6 @@ import { generateOrderNumber, markupPercentPrice, normalizeImagePath } from 'src
 import { CheckoutDto } from './dto/query-cart.dto';
 import { HistoryAction } from 'generated/prisma/browser';
 import { HistoryService } from 'src/history/history.service';
-import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
 import { ParserService } from 'src/integrations/parser/parser.service';
 
 @Injectable()
@@ -241,10 +240,20 @@ export class CartService {
           orderNumber: generateOrderNumber(),
           totalPrice,
 
-          deliveryCountry: dto.deliveryCountry,
           deliveryCity: dto.deliveryCity,
+          deliveryPhone: dto.deliveryPhone,
+          deliveryEmail: dto.deliveryEmail,
+          deliveryLastname: dto.deliveryLastname,
+          deliveryFirstname: dto.deliveryFirstname,
+          deliveryMiddlename: dto.deliveryMiddlename,
+          deliveryComment: dto.deliveryComment,
+          deliveryVin: dto.deliveryVin,
+          deliveryPoint: dto.deliveryPoint,
+          deliveryPointRef: dto.deliveryPointRef,
+
           deliveryStreet: dto.deliveryStreet,
           deliveryHouse: dto.deliveryHouse,
+          deliveryApartment: dto.deliveryApartment,
 
           items: {
             create: cart.items.map((item) => ({

@@ -28,11 +28,43 @@ class CreateOrderItemDto {
 
 export class CreateOrderDto {
     @IsString()
-    "deliveryCountry": string;
+    "deliveryCity": string;
+    
+    @IsString()
+    "deliveryPhone": string;
+
+    @IsOptional()
+    @IsString()
+    "deliveryEmail": string;
 
     @IsString()
-    "deliveryCity": string;
+    "deliveryLastname": string;
 
+    @IsOptional()
+    @IsString()
+    "deliveryFirstname": string;
+
+    @IsOptional()
+    @IsString()
+    "deliveryMiddlename": string;
+
+    @IsOptional()
+    @IsString()
+    "deliveryComment": string;
+
+    @IsOptional()
+    @IsString()
+    "deliveryVin": string;
+
+    @IsOptional()
+    @IsString()
+    "deliveryPoint": string;
+
+    @IsOptional()
+    @IsString()
+    "deliveryPointRef": string;
+
+    @IsOptional()
     @IsString()
     "deliveryStreet": string;
 
@@ -42,10 +74,6 @@ export class CreateOrderDto {
     @IsOptional()
     @IsString()
     "deliveryApartment"?: string;
-
-    @IsOptional()
-    @IsString()
-    "deliveryPostalCode"?: string;
 
     @IsArray()
     @ValidateNested({ each: true })

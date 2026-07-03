@@ -15,48 +15,67 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderService } from './order.service';
 import { UpdateOrderStatusDto } from './dto/update-order.dto';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { CurrentUser, Roles } from 'src/auth/decorators/roles.decorator';
 import { OrderStatus, Role } from 'generated/prisma/enums';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrderService) { }
 
   @Post()
+  @ApiOperation({
+    summary:'Создать заказ',
+    description:'Создает заказ на основе элементов в корзине пользователя. В будущем планируется возможность выбора конкретных элементов для заказа.'
+  })
   create(
-    @Req() req,
+    @CurrentUser() user: Express.User,
     @Body() dto: CreateOrderDto,
   ) {
-    return this.ordersService.create(
-      req.user.userId,
+    return this.ordersService.create( 
+      user.userId,
       dto,
     );
   }
 
   @Get()
-  findAll(@Req() req) {
+  @ApiOperation({
+    summary: 'Получить список заказов пользователя',
+    description: 'Возвращает все заказы, связанные с текущим пользователем',
+  })
+  findAll(@CurrentUser() user: Express.User) {
     return this.ordersService.findAll(
-      req.user.userId,
+      user.userId,
     );
   }
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Получить информацию о заказе',
+    description: 'Возвращает информацию о конкретном заказе пользователя',
+  })
   findOne(
-    @Req() req,
+    @CurrentUser() user: Express.User,
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.ordersService.findOne(
       id,
-      req.user.userId,
+      user.userId,
     );
   }
 
   @Patch(':id/status')
+  @ApiOperation({
+    summary: 'Обновить статус заказа',
+    description: 'Позволяет администратору обновить статус заказа',
+  })
   @Roles(Role.ADMIN)
   updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateOrderStatusDto,
+    @CurrentUser() user: Express.User,
   ) {
     return this.ordersService.updateStatus(
       id,
