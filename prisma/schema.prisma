@@ -49,8 +49,9 @@ model Modification {
   engineTypeId           Int
   fuelPreparationId      Int
   bodyTypeId             Int
-  driveTypeId            Int
   modelId                Int
+  driveTypeId            Int
+
   bodyType               BodyType             @relation(fields: [bodyTypeId], references: [id])
   driveType              DriveType            @relation(fields: [driveTypeId], references: [id])
   engineType             EngineType           @relation(fields: [engineTypeId], references: [id])
@@ -59,6 +60,7 @@ model Modification {
   model                  Model                @relation(fields: [modelId], references: [id])
   engines                ModificationEngine[]
   catalogs               CatalogCar[]
+  garageCars GarageCar[]
 
   @@unique([modelId, modificationAutotechId])
   @@index([modelId])
@@ -178,6 +180,8 @@ model User {
   orders    Order[]
   reviews   Review[]
   history   History[]
+  garages   Garage[]
+
 }
 
 model Address {
@@ -352,3 +356,34 @@ model CartItem {
   @@unique([cartId, itemNo])
 }
 
+model Garage {
+  id Int @id @default(autoincrement())
+  name String?
+  comment   String?
+
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+
+  cars      GarageCar[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GarageCar {
+  id Int @id @default(autoincrement())
+  garageId Int
+  garage   Garage @relation(fields: [garageId], references: [id], onDelete: Cascade)
+
+  modificationId Int
+  modification   Modification @relation(fields: [modificationId], references: [id])
+
+  vin String? @unique
+
+  nickname String?
+  mileage Int?
+  year Int?
+  color String?
+
+  createdAt DateTime @default(now())
+}

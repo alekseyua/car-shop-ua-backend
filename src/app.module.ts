@@ -17,6 +17,8 @@ import { ReviewModule } from './review/review.module';
 import { HistoryModule } from './history/history.module';
 import { NovaposhtaModule } from './novaposhta/novaposhta.module';
 import { IoredisModule } from './core/ioredis/ioredis.module';
+import { GarageModule } from './garage/garage.module';
+import { GarageCarModule } from './garage-car/garage-car.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { IoredisModule } from './core/ioredis/ioredis.module';
     HistoryModule,
     NovaposhtaModule,
     IoredisModule,
+    GarageModule,
+    GarageCarModule,
   ],
   controllers: [],
   providers: [],

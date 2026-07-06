@@ -7,8 +7,6 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  RawBodyRequest,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -16,28 +14,23 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderService } from './order.service';
 import { UpdateOrderStatusDto } from './dto/update-order.dto';
 import { CurrentUser, Roles } from 'src/auth/decorators/roles.decorator';
-import { OrderStatus, Role } from 'generated/prisma/enums';
+import { Role } from 'generated/prisma/enums';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
 export class OrdersController {
-  constructor(private readonly ordersService: OrderService) { }
+  constructor(private readonly ordersService: OrderService) {}
 
   @Post()
   @ApiOperation({
-    summary:'Создать заказ',
-    description:'Создает заказ на основе элементов в корзине пользователя. В будущем планируется возможность выбора конкретных элементов для заказа.'
+    summary: 'Создать заказ',
+    description:
+      'Создает заказ на основе элементов в корзине пользователя. В будущем планируется возможность выбора конкретных элементов для заказа.',
   })
-  create(
-    @CurrentUser() user: Express.User,
-    @Body() dto: CreateOrderDto,
-  ) {
-    return this.ordersService.create( 
-      user.userId,
-      dto,
-    );
+  create(@CurrentUser() user: Express.User, @Body() dto: CreateOrderDto) {
+    return this.ordersService.create(user.userId, dto);
   }
 
   @Get()
@@ -46,9 +39,7 @@ export class OrdersController {
     description: 'Возвращает все заказы, связанные с текущим пользователем',
   })
   findAll(@CurrentUser() user: Express.User) {
-    return this.ordersService.findAll(
-      user.userId,
-    );
+    return this.ordersService.findAll(user.userId);
   }
 
   @Get(':id')
@@ -60,10 +51,7 @@ export class OrdersController {
     @CurrentUser() user: Express.User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    return this.ordersService.findOne(
-      id,
-      user.userId,
-    );
+    return this.ordersService.findOne(id, user.userId);
   }
 
   @Patch(':id/status')
@@ -77,10 +65,7 @@ export class OrdersController {
     @Body() dto: UpdateOrderStatusDto,
     @CurrentUser() user: Express.User,
   ) {
-    return this.ordersService.updateStatus(
-      id,
-      dto.status,
-    );
+    return this.ordersService.updateStatus(id, dto.status);
   }
 
   // @Post('webhook')
