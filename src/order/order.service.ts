@@ -114,27 +114,22 @@ export class OrderService {
   }
 
   async updateStatus(orderId: number, status: OrderStatus) {
-    const data: any = {
-      status,
-    };
-
-    if (status === OrderStatus.PAID) {
-      data.paidAt = new Date();
-    }
-
-    if (status === OrderStatus.SHIPPED) {
-      data.shippedAt = new Date();
-    }
-
-    if (status === OrderStatus.DELIVERED) {
-      data.deliveredAt = new Date();
-    }
-
     return this.prisma.order.update({
       where: {
         id: orderId,
       },
-      data,
+      data: {
+        status,
+        ...(status === OrderStatus.PAID && {
+          paidAt: new Date(),
+        }),
+        ...(status === OrderStatus.SHIPPED && {
+          shippedAt: new Date(),
+        }),
+        ...(status === OrderStatus.DELIVERED && {
+          deliveredAt: new Date(),
+        }),
+      },
     });
   }
 }

@@ -233,7 +233,9 @@ model Order {
   orderNumber String @unique
 
   status     OrderStatus @default(PENDING)
-
+  paidAt DateTime?
+  shippedAt DateTime?
+  deliveredAt DateTime?
   userId     Int
   user       User @relation(fields: [userId], references: [id])
 
