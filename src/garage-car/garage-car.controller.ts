@@ -11,7 +11,7 @@ import {
 import { GarageCarService } from './garage-car.service';
 import { CreateGarageCarDto } from './dto/create-garage-car.dto';
 import { UpdateGarageCarDto } from './dto/update-garage-car.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/roles.decorator';
 
@@ -21,6 +21,9 @@ import { CurrentUser } from 'src/auth/decorators/roles.decorator';
 export class GarageCarController {
   constructor(private readonly garageCarService: GarageCarService) {}
 
+  @ApiOperation({
+    summary: 'Create car in the garage'
+  })
   @Post()
   create(
     @CurrentUser() user: Express.User,

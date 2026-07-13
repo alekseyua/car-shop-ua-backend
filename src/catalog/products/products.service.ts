@@ -24,6 +24,7 @@ export class ProductsService {
   async findAll(dto: QueryProductDto): Promise<ResponseProductDto[]> {
     try {
       const { typeId, groupId } = dto;
+      console.log({dto})
       const getProduct: ResponseParserProductDto[] =
         await this.parserService.getProduct(typeId, groupId);
       // console.log(getProduct[0], getProduct.length);

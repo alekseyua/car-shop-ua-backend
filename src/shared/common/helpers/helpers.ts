@@ -84,3 +84,11 @@ export async function generateNickname(
 }
 
 export const normalizeImagePath = (img: string | []) => typeof img === 'object'? img.map((i:string)=>i.replace('tcd/','tcd-pic/')) :img.replace('tcd/', 'tcd-pic/');
+
+export const weakCache = () => {
+  const cache = new WeakMap();
+  return {
+    set: (obj, value) => cache.set(obj,value),
+    get: (obj) => cache.get(obj)
+  }
+}

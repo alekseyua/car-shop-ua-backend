@@ -7,7 +7,7 @@ import { PrismaService } from 'src/core/prisma/prisma.service';
 export class GarageCarService {
   constructor(private readonly prisma: PrismaService){}
 
-  private async getCar(userId: number, id: number) {
+  private async getCarGarage(userId: number, id: number) {
     const car = await this.prisma.garageCar.findFirst({
       where: {
         id,
@@ -32,7 +32,14 @@ export class GarageCarService {
     });
 
     if (!garage) {
-      throw new NotFoundException('Garage not found');
+      console.log('Garage not found')
+      return await this.prisma.garage.create({
+        data: {
+          name: 'My garage',
+          userId: userId,
+        }
+      })
+      // throw new NotFoundException('Garage not found');
     }
 
     return garage;
@@ -42,11 +49,12 @@ export class GarageCarService {
     userId: number,
     dto: CreateGarageCarDto,
   ) {
-    const garageUser = await this.getGarage(userId);
-    const garage = await this.getCar(userId, garageUser.id);
-
-    if (!garage) {
-      throw new NotFoundException('Garage not found');
+    const garage = await this.getGarage(userId);
+    const garageId = dto?.garageId ?? garage?.id;
+    // console.log({ garage, dto, garageId })
+    // const carGarage = await this.getCarGarage(userId, garageId);
+    if (!(garage || dto?.garageId)) {
+      throw new NotFoundException('Garage and Garage-Car not found');
     }
 
     const modification = await this.prisma.modification.findUnique({
@@ -61,7 +69,7 @@ export class GarageCarService {
 
     return this.prisma.garageCar.create({
       data: {
-        garageId: garageUser.id,
+        garageId: garageId,
         modificationId: dto.modificationId,
         vin: dto.vin,
         nickname: dto.nickname,
@@ -97,7 +105,7 @@ export class GarageCarService {
   }
 
   async findOne(userId: number, id: number) {
-    const car = await this.getCar(userId, id);
+    const car = await this.getCarGarage(userId, id);
     if (!car) {
       throw new NotFoundException();
     }

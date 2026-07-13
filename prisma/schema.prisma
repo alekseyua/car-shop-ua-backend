@@ -360,7 +360,7 @@ model CartItem {
 
 model Garage {
   id Int @id @default(autoincrement())
-  name String?
+  name String
   comment   String?
 
   userId Int
@@ -370,6 +370,8 @@ model Garage {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
 }
 
 model GarageCar {
@@ -388,4 +390,6 @@ model GarageCar {
   color String?
 
   createdAt DateTime @default(now())
+
+  @@unique([garageId, modificationId])
 }
