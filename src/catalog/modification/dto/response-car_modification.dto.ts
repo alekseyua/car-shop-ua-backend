@@ -117,6 +117,15 @@ export class ResponseCarModificationDto {
 
     @ApiProperty({
         example: {
+            mark: 'Opel'
+        },
+        description: 'Бренд автомобиля',
+    })
+    "brand": {
+        "mark": String;
+    }
+    @ApiProperty({
+        example: {
             model: 'Astra'
         },
         description: 'Модель автомобиля',

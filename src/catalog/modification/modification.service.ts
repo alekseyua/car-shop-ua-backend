@@ -25,7 +25,12 @@ export class ModificationService {
         include:{
           model: {
             select: {
-              model: true
+              model: true,
+              brand: {
+                select: {
+                  mark: true
+                }
+              },
             }
           },
           engineType: {
@@ -42,7 +47,45 @@ export class ModificationService {
       }),
       this.prisma.modification.count({ where: { modelId: idModel } })
     ])
-    return createRequestPagination(modifications, page, limit, total);
+    const data = modifications.map((m) => ({
+      id: m.id,
+      modificationAutotechId: m.modificationAutotechId,
+      typeName: m.typeName,
+      typeRange: m.typeRange,
+      kw: m.kw,
+      hp: m.hp,
+      ccmTech: m.ccmTech,
+      capacity: m.capacity,
+      cylinders: m.cylinders,
+      valve: m.valve,
+      tonnage: m.tonnage,
+      active: m.active,
+      image: m.image,
+      fuelId: m.fuelId,
+      engineTypeId: m.engineTypeId,
+      fuelPreparationId: m.fuelPreparationId,
+      bodyTypeId: m.bodyTypeId,
+      driveTypeId: m.driveTypeId,
+      modelId: m.modelId,
+
+      brand: {
+        mark: m.model.brand.mark,
+      },
+
+      model: {
+        model: m.model.model,
+      },
+
+      engineType: {
+        name: m.engineType.name,
+      },
+
+      bodyType: {
+        name: m.bodyType.name,
+      },
+    }));
+
+    return createRequestPagination(data, page, limit, total);
   }
 
 }

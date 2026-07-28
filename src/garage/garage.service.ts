@@ -18,7 +18,6 @@ export class GarageService {
         }
       },
     });
-    console.log({garage})
     if(garage){
       throw new BadRequestException('Garage with this name already exists.')
     }
@@ -42,7 +41,7 @@ export class GarageService {
   }
 
   async findAll(userId: number): Promise<GarageResponseDto[]> {
-    return this.prisma.garage.findMany({
+    const garage = await this.prisma.garage.findMany({
       where: {
         userId,
       },
@@ -60,7 +59,17 @@ export class GarageService {
                 id: true,
                 modificationAutotechId: true,
                 typeName: true,
-                model: true,
+                model: {
+                  select: {
+                    model: true,
+                    brand: {
+                      select: {
+                        mark: true
+                      }
+                    },
+
+                  }
+                },
                 typeRange: true,
                 engineType: true,
                 kw: true,
@@ -72,6 +81,20 @@ export class GarageService {
         },
       }
     });
+    const data = garage.map( (g) => ({
+      ...g,
+      cars: [
+        ...g.cars.map( (gc) => ({
+          ...gc,
+          modification: {
+            ...gc.modification,
+            // model: gc.modification.model,
+            brand: gc.modification.model.brand.mark
+          }
+        }))
+      ]
+    }))
+    return data;
   }
 
   async remove(id: number, userId: number) {

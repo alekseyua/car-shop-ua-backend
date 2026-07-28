@@ -66,7 +66,7 @@ export class GarageCarService {
     if (!modification) {
       throw new NotFoundException('Modification not found');
     }
-
+    console.log('CREATE');
     return this.prisma.garageCar.create({
       data: {
         garageId: garageId,
