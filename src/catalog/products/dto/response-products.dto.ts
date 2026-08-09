@@ -162,6 +162,14 @@ export class ResponseProductDto {
   'firstPic': string;
   @ApiProperty()
   'criteriaLine': string;
+
+  @ApiProperty()
+  'longText'?: string;
+  @ApiProperty()
+  'groupCode'?: string;
+  @ApiProperty()
+  'subGroupCode'?: string;
+  
   @ApiProperty()
   'retail': number;
   @ApiProperty()

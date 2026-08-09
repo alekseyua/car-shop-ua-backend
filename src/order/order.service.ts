@@ -35,7 +35,6 @@ export class OrderService {
     }
 
     const orderNumber = generateOrderNumber();
-    console.log({ cartItems });
     const order = await this.prisma.order.create({
       data: {
         userId,

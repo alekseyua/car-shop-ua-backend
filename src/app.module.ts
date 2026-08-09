@@ -19,6 +19,7 @@ import { NovaposhtaModule } from './novaposhta/novaposhta.module';
 import { IoredisModule } from './core/ioredis/ioredis.module';
 import { GarageModule } from './garage/garage.module';
 import { GarageCarModule } from './garage-car/garage-car.module';
+import { ExcelModule } from './excel/excel.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { GarageCarModule } from './garage-car/garage-car.module';
     IoredisModule,
     GarageModule,
     GarageCarModule,
+    ExcelModule,
   ],
   controllers: [],
   providers: [],

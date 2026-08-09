@@ -25,7 +25,6 @@ export class OemController {
   async findOne(
     @Param() param: QueryOemByItemDto,
   ): Promise<ResponseOemByItemDto[]> {
-    console.log('param', param);
     return await this.OemService.findOne({ id: param.id });
   }
 

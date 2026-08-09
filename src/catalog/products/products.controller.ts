@@ -19,7 +19,6 @@ export class ProductController {
   findAll(
     @Query() dto: QueryProductDto,
   ): Promise<ResponseProductDto[]> {
-    console.log(dto);
     return this.ProductsService.findAll(dto);
   }
 

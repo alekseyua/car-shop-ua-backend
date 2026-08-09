@@ -15,12 +15,15 @@ import { ResponseOemByItemDto } from 'src/catalog/oem/dto/response_oem_by_item.d
 
 @Injectable()
 export class ParserService implements OnModuleInit, OnModuleDestroy {
+  
   private browser!: Browser;
   private context!: BrowserContext;
   private request!: APIRequestContext;
 
   private token: string | null = null;
 
+  constructor(
+  ){}
   // -----------------------------------
   // INIT
   // -----------------------------------
@@ -103,6 +106,7 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     options?: {
       headers?: Record<string, string>;
       data?: any;
+      timeout?: number;
     },
   ) {
     // Собираем заголовки
@@ -114,15 +118,9 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     // Собираем body
     const body = options?.data;
 
-    // Логируем на консоль перед отправкой
-    console.log('--- REQUEST INFO ---');
-    console.log('URL:', url);
-    console.log('HEADERS:', headers);
-    console.log('BODY:', body);
-    console.log('-------------------');
-
     // Отправляем POST
     let response = await this.request.post(url, {
+      ...options,
       headers,
       data: body,
     });
@@ -246,5 +244,27 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     }
     const { topOffers } = await response.json();
     return topOffers;
+  }
+  // -----------------------------------
+  // GET PRICE PRODUCTS
+  // -----------------------------------
+  async getPriceXLSProducts () {
+      //https://ecom.ad.ua/api/itemSet/downloadPrice
+      const response = await this.authorizedPost('api/itemSet/downloadPrice', {
+        headers: {
+          accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'content-type': 'application/json',
+        },
+        data: 'xlsx3',
+        timeout: 0,
+      });
+      if (!response.ok()) {
+        throw new Error(`Price XLS error: ${response.status()}`);
+      }
+
+      // Получаем Excel как Buffer
+      const buffer = await response.body();
+
+      return buffer;
   }
 }

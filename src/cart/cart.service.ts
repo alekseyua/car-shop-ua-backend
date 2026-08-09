@@ -30,7 +30,6 @@ export class CartService {
       });
       
     }
-    console.log({cart})
     return cart;
   }
 

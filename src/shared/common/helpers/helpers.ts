@@ -15,14 +15,16 @@ const funcParsed = (data: string): ParsedStock => {
   if (typeof parsed === 'object' && parsed !== null && 'Stock' in parsed) {
     return parsed as ParsedStock;
   }
-  throw new Error('Parsed field');
+  throw new Error('Parsed failed');
 };
 
+export const normolizeItemNoForSearch = (itemNo: string) => itemNo.replace(/\.|\-| /g, '');
+
 export const normalizeStock = (
-  stock: string,
+  stock: string | ParsedStock,
   currentCity: string,
 ): ResponseStockDto[] => {
-  const parser: ParsedStock = funcParsed(stock);
+  const parser: ParsedStock = typeof stock === 'object'? stock : funcParsed(stock);
 
   let todayQty = 0;
   let tomorrowQty = 0;
@@ -64,9 +66,16 @@ export const normalizeStock = (
       statusDelivery: 'notAvailable',
     });
   }
-
   return result;
 };
+
+export const normalizeDoubleNumber = (num) => {
+  const rawPrice = String(num ?? '');
+  const price = Number(rawPrice.replace(',', '.'));
+
+  const normalizedPrice = Number.isNaN(price) ? 0 : price;
+  return normalizedPrice;
+}
 
 export const markupPercentPrice = (price: number): number =>
   price + (price * Math.round(adminConfig.markupPercent)) / 100;
