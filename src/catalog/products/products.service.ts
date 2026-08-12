@@ -24,12 +24,12 @@ export class ProductsService {
 
   private async getProductFromPrice (itemNo: string): Promise<{} | null> {
     const productFromPriceCache = await this.redis.get(itemNo);
-    console.log({ productFromPriceCache })
     if (!productFromPriceCache) {
-      console.log('failde to find product from price cache - ' + itemNo)
+      console.log('getProductFromPrice failde to find product from price cache - ' + itemNo)
     }
     return productFromPriceCache ? JSON.parse(productFromPriceCache) : null;
   }
+
   async findAll(dto: QueryProductDto): Promise<ResponseProductDto[]> {
     try {
       const { typeId, groupId } = dto;
@@ -118,13 +118,16 @@ export class ProductsService {
       if (!response.item) {
         return response;
       }
-      const normolizeReplaces = await Promise.all((response.replaces ?? [])?.filter((item: ProductItem)=>item.inStock)?.map(async (item: ProductItem) => {
+      const normolizeReplaces = await Promise.all((response.replaces ?? [])?.filter((item: ProductItem)=>item.inStock)?.map(async (item: any) => {
         const productFromPriceCacheObj = await this.getProductFromPrice(item.itemNo);
+        if (!productFromPriceCacheObj){
+          console.log('itemNo - ', item.itemNo, '---' ,item.stock)
+        }
         return {
           ...item,
           firstPic: normalizeImagePath(item.firstPic as string) as string,
           price: productFromPriceCacheObj ? markupPercentPrice(normalizeDoubleNumber(productFromPriceCacheObj[4])) : item.price,
-          stock: productFromPriceCacheObj ? normalizeStock(productFromPriceCacheObj[9], adminConfig.autotechsnicsCity) : item.stock,
+          stock: productFromPriceCacheObj ? normalizeStock(productFromPriceCacheObj[9], adminConfig.autotechsnicsCity) : normalizeStock(item.stock, adminConfig.autotechsnicsCity),
         }
       }));
 
@@ -149,13 +152,16 @@ export class ProductsService {
       }
 
       const productFromPriceCacheObj = await this.getProductFromPrice(response.item.itemNo);
-
+      if (productFromPriceCacheObj){
+        this.redis.set('product-one' + id, JSON.stringify(productFromPriceCacheObj))
+      }
+      
       const res: ResponseProductDetailDto = {
         ...response,
         item: {
           ...response.item,
           firstPic: normalizeImagePath(response.item.firstPic as string) as string,
-          price: productFromPriceCacheObj ? markupPercentPrice(normalizeDoubleNumber(productFromPriceCacheObj[4])) : response.item.price,
+          price: productFromPriceCacheObj ? markupPercentPrice(normalizeDoubleNumber(productFromPriceCacheObj[4])) : markupPercentPrice(response.item.price),
           stock: productFromPriceCacheObj ? normalizeStock(productFromPriceCacheObj[9], adminConfig.autotechsnicsCity) : normalizeStock(
             response.item.stock as string,
             adminConfig.autotechsnicsCity,
@@ -163,9 +169,6 @@ export class ProductsService {
         },
         replaces: normolizeReplaces ?? null,
       };
-      if(res){
-        this.redis.set('product-one'+id, JSON.stringify(res))
-      }
       return res;
     } catch (error) {
       console.log(error);
@@ -180,54 +183,31 @@ export class ProductsService {
       if (cachTopProductsStr){
         console.log('Top products from cache')
         const cachTopProducts = JSON.parse(cachTopProductsStr);
-        return await Promise.all(cachTopProducts.map(async (item: ResponseProductDto) => {
+        return await Promise.all(cachTopProducts.map(async (item: any) => {
           const productFromPriceCacheObj = await this.getProductFromPrice(item.itemNo);
 
           return {
-            itemNo: item.itemNo,
-            brand: item.brand,
-            quantity: item.quantity,
-            description: item.description,
-            searchDescription: item.searchDescription,
-            inStock: item.inStock,
+            ...item,
             firstPic: normalizeImagePath(item.firstPic as string) as string,
-            criteriaLine: item.criteriaLine,
-            retail: item.retail,
-            price: productFromPriceCacheObj ? markupPercentPrice(normalizeDoubleNumber(productFromPriceCacheObj[4])) : item.price,
-            salesUoM: item.salesUoM,
-            criterias: item.criterias,
-            longText: item.longText,
-            groupCode: item.groupCode,
-            subGroupCode: item.subGroupCode,
-            stock: productFromPriceCacheObj ? normalizeStock(productFromPriceCacheObj[9], adminConfig.autotechsnicsCity) : item.stock,
+            price: productFromPriceCacheObj ? markupPercentPrice(normalizeDoubleNumber(productFromPriceCacheObj[4])) : markupPercentPrice(item.price),
+            stock: productFromPriceCacheObj ? normalizeStock(productFromPriceCacheObj[9], adminConfig.autotechsnicsCity) : normalizeStock(item.stock, adminConfig.autotechsnicsCity),
           }
         }));
       }
       const response: any[] =
       await this.parserService.getTopProducts();
+      if(response){
+        await this.redis.set('top-products', JSON.stringify(response));
+      }
+
       const serializeTopProducts = await Promise.all(response.map( async (item) => {
         const productFromPriceCacheObj = await this.getProductFromPrice(item.itemNo);
         return {
-        itemNo: item.itemNo,
-        brand: item.brand,
-        quantity: item.quantity,
-        description: item.description,
-        searchDescription: item.searchDescription,
-        inStock: item.inStock,
-        firstPic: normalizeImagePath(item.firstPic as string) as string,
-        criteriaLine: item.criteriaLine,
-        retail: item.retail,
-        price: productFromPriceCacheObj ? markupPercentPrice(normalizeDoubleNumber(productFromPriceCacheObj[4])) : markupPercentPrice(item.price),
-        salesUoM: item.salesUoM,
-        criterias: item.criterias,
-        longText: item.longText,
-        groupCode: item.groupCode,
-        subGroupCode: item.subGroupCode,
-        stock: productFromPriceCacheObj ? normalizeStock(productFromPriceCacheObj[9], adminConfig.autotechsnicsCity) : normalizeStock(item.stock, adminConfig.autotechsnicsCity),
+          ...item,
+          firstPic: normalizeImagePath(item.firstPic as string) as string,
+          price: productFromPriceCacheObj ? markupPercentPrice(normalizeDoubleNumber(productFromPriceCacheObj[4])) : markupPercentPrice(item.price),
+          stock: productFromPriceCacheObj ? normalizeStock(productFromPriceCacheObj[9], adminConfig.autotechsnicsCity) : normalizeStock(item.stock, adminConfig.autotechsnicsCity),
       }}))
-      if(response){
-        await this.redis.set('top-products', JSON.stringify(serializeTopProducts));
-      }
       console.log('Top products from autotechnics')
 
       return serializeTopProducts;
