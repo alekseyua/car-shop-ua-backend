@@ -5,7 +5,7 @@ import { PrismaService } from 'src/core/prisma/prisma.service';
 
 @Injectable()
 export class GarageCarService {
-  constructor(private readonly prisma: PrismaService){}
+  constructor(private readonly prisma: PrismaService) {}
 
   private async getCarGarage(userId: number, id: number) {
     const car = await this.prisma.garageCar.findFirst({
@@ -24,31 +24,29 @@ export class GarageCarService {
     return car;
   }
 
-  private async getGarage(userId: number){
+  private async getGarage(userId: number) {
     const garage = await this.prisma.garage.findFirst({
       where: {
         userId,
+        isDefault: true,
       },
     });
 
     if (!garage) {
-      console.log('Garage not found')
+      console.log('Garage not found');
       return await this.prisma.garage.create({
         data: {
           name: 'My garage',
           userId: userId,
-        }
-      })
+        },
+      });
       // throw new NotFoundException('Garage not found');
     }
 
     return garage;
-  };
+  }
 
-  async create(
-    userId: number,
-    dto: CreateGarageCarDto,
-  ) {
+  async create(userId: number, dto: CreateGarageCarDto) {
     const garage = await this.getGarage(userId);
     const garageId = dto?.garageId ?? garage?.id;
     // console.log({ garage, dto, garageId })
@@ -110,14 +108,10 @@ export class GarageCarService {
       throw new NotFoundException();
     }
 
-      return car;
+    return car;
   }
 
-  async update(
-    userId: number,
-    id: number,
-    dto: UpdateGarageCarDto,
-  ) {
+  async update(userId: number, id: number, dto: UpdateGarageCarDto) {
     await this.findOne(userId, id);
 
     return this.prisma.garageCar.update({

@@ -22,27 +22,23 @@ export class GarageCarController {
   constructor(private readonly garageCarService: GarageCarService) {}
 
   @ApiOperation({
-    summary: 'Create car in the garage'
+    summary: 'Create car in the garage',
   })
   @Post()
   create(
     @CurrentUser() user: Express.User,
-    @Body() createGarageCarDto: CreateGarageCarDto) {
-    return this.garageCarService.create(user.userId,  createGarageCarDto);
+    @Body() createGarageCarDto: CreateGarageCarDto,
+  ) {
+    return this.garageCarService.create(user.userId, createGarageCarDto);
   }
 
   @Get()
-  findAll(
-    @CurrentUser() user: Express.User,
-  ) {
-    
+  findAll(@CurrentUser() user: Express.User) {
     return this.garageCarService.findAll(user.userId);
   }
 
   @Get(':id')
-  findOne(
-    @CurrentUser() user: Express.User,
-    @Param('id') id: string) {
+  findOne(@CurrentUser() user: Express.User, @Param('id') id: string) {
     return this.garageCarService.findOne(user.userId, +id);
   }
 
@@ -56,10 +52,7 @@ export class GarageCarController {
   }
 
   @Delete(':id')
-  remove(
-    @CurrentUser() user: Express.User,
-    @Param('id') id: string
-  ) {
+  remove(@CurrentUser() user: Express.User, @Param('id') id: string) {
     return this.garageCarService.remove(user.userId, +id);
   }
 }

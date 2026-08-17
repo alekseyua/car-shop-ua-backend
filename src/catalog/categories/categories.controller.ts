@@ -19,18 +19,19 @@ export class CatalogController {
         data: {
           type: 'array',
           items: {
-            $ref: getSchemaPath(ResponseCatalogCarDto)
-          }
+            $ref: getSchemaPath(ResponseCatalogCarDto),
+          },
         },
         meta: {
-          $ref: getSchemaPath(MetaDto)
-        }
-      }
-    }
+          $ref: getSchemaPath(MetaDto),
+        },
+      },
+    },
   })
   @Get()
-    findAll(@Query() dto: QueryCatalogDto):Promise<PaginationResponse<ResponseCatalogCarDto>> {
-
+  findAll(
+    @Query() dto: QueryCatalogDto,
+  ): Promise<PaginationResponse<ResponseCatalogCarDto>> {
     return this.CategoryService.findAll(dto);
   }
 }

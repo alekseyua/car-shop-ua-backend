@@ -20,6 +20,8 @@ import { IoredisModule } from './core/ioredis/ioredis.module';
 import { GarageModule } from './garage/garage.module';
 import { GarageCarModule } from './garage-car/garage-car.module';
 import { ExcelModule } from './excel/excel.module';
+import { AccessoriesService } from './accessories/accessories.service';
+import { AccessoriesModule } from './accessories/accessories.module';
 
 @Module({
   imports: [
@@ -44,9 +46,10 @@ import { ExcelModule } from './excel/excel.module';
     GarageModule,
     GarageCarModule,
     ExcelModule,
+    AccessoriesModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [AccessoriesService],
 
 })
 export class AppModule { }

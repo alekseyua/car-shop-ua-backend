@@ -11,3 +11,7 @@ export const buildPagination = (
     take: Number(limit),
   };
 };
+
+export const sliceArrayPagination = (arr: [], skip: number, take: number) => {
+  return arr.slice(skip, skip + take);
+};

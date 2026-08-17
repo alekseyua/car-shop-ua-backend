@@ -1,7 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateGarageDto } from './dto/create-garage.dto';
 import { PrismaService } from 'src/core/prisma/prisma.service';
-import { GarageResponseDto } from './dto/response-garage.dto';
+import { GarageFromPrisma, GarageResponseDto } from './dto/response-garage.dto';
 import { UpdateGarageDto } from './dto/update-garage.dto';
 import { Prisma } from 'generated/prisma/client';
 
@@ -9,17 +13,51 @@ import { Prisma } from 'generated/prisma/client';
 export class GarageService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(userId: number, dto: CreateGarageDto): Promise<GarageResponseDto> {
-    const garage = await this.prisma.garage.findUnique({
+  normalizeGarage(garage: GarageFromPrisma[]): GarageResponseDto[] {
+    return garage.map((g) => ({
+      ...g,
+      cars: [
+        ...g.cars.map((gc) => ({
+          ...gc,
+          vin: gc.vin ?? '',
+          nickname: gc.nickname ?? '',
+          modification: {
+            ...gc.modification,
+            brand: gc.modification.model.brand.mark,
+            model: gc.modification.model.model,
+            typeName: gc.modification.typeName ?? '',
+            typeRange: gc.modification.typeRange ?? '',
+            kw: gc.modification.kw ?? '',
+            hp: gc.modification.hp ?? '',
+            bodyType: {
+              ...gc.modification.bodyType,
+              name: gc.modification.bodyType.name ?? '',
+            },
+          },
+        })),
+      ],
+    }));
+  }
+
+  async create(
+    userId: number,
+    dto: CreateGarageDto,
+  ): Promise<GarageResponseDto> {
+    const amountOfGarages = await this.prisma.garage.count({
       where: {
-        userId_name:{
-          userId,
-          name: dto.name
-        }
+        userId,
       },
     });
-    if(garage){
-      throw new BadRequestException('Garage with this name already exists.')
+    const garage = await this.prisma.garage.findUnique({
+      where: {
+        userId_name: {
+          userId,
+          name: dto.name,
+        },
+      },
+    });
+    if (garage) {
+      throw new BadRequestException('Garage with this name already exists.');
     }
     // if (garage) {
     //   throw new BadRequestException('Garage already exists');
@@ -30,14 +68,16 @@ export class GarageService {
         userId,
         name: dto.name,
         comment: dto.comment,
+        isDefault: amountOfGarages === 0,
       },
-      select: { 
+      select: {
         id: true,
         name: true,
         comment: true,
-      }
+        isDefault: true,
+      },
     });
-    return response;
+    return { ...response, cars: [] };
   }
 
   async findAll(userId: number): Promise<GarageResponseDto[]> {
@@ -45,10 +85,14 @@ export class GarageService {
       where: {
         userId,
       },
+      orderBy: {
+        isDefault: 'desc',
+      },
       select: {
         id: true,
         name: true,
         comment: true,
+        isDefault: true,
         cars: {
           select: {
             id: true,
@@ -64,11 +108,10 @@ export class GarageService {
                     model: true,
                     brand: {
                       select: {
-                        mark: true
-                      }
+                        mark: true,
+                      },
                     },
-
-                  }
+                  },
                 },
                 typeRange: true,
                 engineType: true,
@@ -79,21 +122,9 @@ export class GarageService {
             },
           },
         },
-      }
+      },
     });
-    const data = garage.map( (g) => ({
-      ...g,
-      cars: [
-        ...g.cars.map( (gc) => ({
-          ...gc,
-          modification: {
-            ...gc.modification,
-            // model: gc.modification.model,
-            brand: gc.modification.model.brand.mark
-          }
-        }))
-      ]
-    }))
+    const data = this.normalizeGarage(garage);
     return data;
   }
 
@@ -106,7 +137,7 @@ export class GarageService {
     });
   }
 
-  async edit (id: number, userId: number, dto: UpdateGarageDto) {
+  async edit(id: number, userId: number, dto: UpdateGarageDto) {
     const garage = await this.prisma.garage.findFirst({
       where: {
         id,
@@ -133,12 +164,40 @@ export class GarageService {
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new BadRequestException(
-          'Garage with this name already exists.',
-        );
+        throw new BadRequestException('Garage with this name already exists.');
       }
 
       throw error;
     }
+  }
+  async setDefaultGarage(id: number, userId: number) {
+    const garage = await this.prisma.garage.findFirst({
+      where: {
+        id,
+        userId,
+      },
+    });
+
+    if (!garage) {
+      throw new NotFoundException('Garage not found');
+    }
+
+    await this.prisma.garage.updateMany({
+      where: {
+        userId,
+      },
+      data: {
+        isDefault: false,
+      },
+    });
+
+    return this.prisma.garage.update({
+      where: {
+        id,
+      },
+      data: {
+        isDefault: true,
+      },
+    });
   }
 }

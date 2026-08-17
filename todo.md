@@ -40,4 +40,7 @@ src/
   9) дописать ответы в endpoints
   10) интегрировать history во все endpoints
 
-  1_) создать телеграм бота для отслеживания заказов
+  1_) cron tasks
+  a) fetch GET  /accessories
+  b) fetch GET /excel
+  

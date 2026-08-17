@@ -362,6 +362,7 @@ model Garage {
   id Int @id @default(autoincrement())
   name String
   comment   String?
+  isDefault Boolean @default(false)
 
   userId Int
   user User @relation(fields: [userId], references: [id])

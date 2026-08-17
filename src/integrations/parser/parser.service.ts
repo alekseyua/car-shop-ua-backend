@@ -1,29 +1,32 @@
-import {
-    Injectable,
-    OnModuleDestroy,
-    OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 
 import {
-    APIRequestContext,
-    Browser,
-    BrowserContext,
-    chromium,
+  APIRequestContext,
+  Browser,
+  BrowserContext,
+  chromium,
 } from 'playwright';
-import { ResponseParserProductDto, ResponseProductDetailDto } from 'src/catalog/products/dto/response-products.dto';
+import {
+  ResponseParserProductDto,
+  ResponseProductDetailDto,
+} from 'src/catalog/products/dto/response-products.dto';
 import { ResponseOemByItemDto } from 'src/catalog/oem/dto/response_oem_by_item.dto';
+import {
+  AccessoryCategoryDto,
+  ProductAccessoriesDto,
+} from 'src/accessories/dto/response.accessories.dto';
+import { LoginResponse } from './interfaces/response.parser.dto';
+import { ResponseCatalogCarDto } from 'src/catalog/categories/dto/response-catalog.dto';
 
 @Injectable()
 export class ParserService implements OnModuleInit, OnModuleDestroy {
-  
   private browser!: Browser;
   private context!: BrowserContext;
   private request!: APIRequestContext;
 
   private token: string | null = null;
 
-  constructor(
-  ){}
+  constructor() {}
   // -----------------------------------
   // INIT
   // -----------------------------------
@@ -72,7 +75,7 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Login failed: ${response.status()}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as LoginResponse;
 
     if (!data?.token) {
       throw new Error('Token not found in login response');
@@ -105,7 +108,7 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     url: string,
     options?: {
       headers?: Record<string, string>;
-      data?: any;
+      data?: unknown;
       timeout?: number;
     },
   ) {
@@ -154,7 +157,7 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
   // GET CATALOG
   // -----------------------------------
 
-  async getCatalog(idAutotechnics: number) {
+  async getCatalog(idAutotechnics: number): Promise<ResponseCatalogCarDto[]> {
     const response = await this.authorizedPost(
       `/api/Car/Catalog/${idAutotechnics}`,
     );
@@ -162,8 +165,8 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     if (!response.ok()) {
       throw new Error(`Catalog error: ${response.status()}`);
     }
-
-    return await response.json();
+    const data: unknown = await response.json();
+    return data as ResponseCatalogCarDto[];
   }
 
   // -----------------------------------
@@ -186,13 +189,13 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Items error: ${response.status()}`);
     }
 
-    const data = await response.json();
+    const data: unknown = await response.json();
 
     if (!Array.isArray(data)) {
       throw new Error('Invalid catalog response format');
     }
 
-    return data;
+    return data as ResponseParserProductDto[];
   }
 
   // -----------------------------------
@@ -209,8 +212,8 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     if (!response.ok()) {
       throw new Error(`Item details error: ${response.status()}`);
     }
-
-    return await response.json();
+    const data: unknown = await response.json();
+    return data as ResponseProductDetailDto;
   }
   // -----------------------------------
   // GET LIST ITEM OEM
@@ -226,15 +229,15 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     if (!response.ok()) {
       throw new Error(`Item OEM error: ${response.status()}`);
     }
-
-    return await response.json();
+    const data: unknown = await response.json();
+    return data as ResponseOemByItemDto[];
   }
 
   // -----------------------------------
   // GET LIST TOP PRODUCTS
   // -----------------------------------
   async getTopProducts(): Promise<ResponseParserProductDto[]> {
-    const response = await this.authorizedPost('api/Content/Home',{
+    const response = await this.authorizedPost('api/Content/Home', {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -242,29 +245,84 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     if (!response.ok()) {
       throw new Error(`Top products error: ${response.status()}`);
     }
-    const { topOffers } = await response.json();
-    return topOffers;
+    const data: unknown = await response.json();
+    const { topOffers } = data as { topOffers: unknown };
+    return topOffers as ResponseParserProductDto[];
   }
   // -----------------------------------
   // GET PRICE PRODUCTS
   // -----------------------------------
-  async getPriceXLSProducts () {
-      //https://ecom.ad.ua/api/itemSet/downloadPrice
-      const response = await this.authorizedPost('api/itemSet/downloadPrice', {
+  async getPriceXLSProducts() {
+    //https://ecom.ad.ua/api/itemSet/downloadPrice
+    const response = await this.authorizedPost('api/itemSet/downloadPrice', {
+      headers: {
+        accept:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'content-type': 'application/json',
+      },
+      data: 'xlsx3',
+      timeout: 0,
+    });
+    if (!response.ok()) {
+      throw new Error(`Price XLS error: ${response.status()}`);
+    }
+
+    // Получаем Excel как Buffer
+    const buffer = await response.body();
+
+    return buffer;
+  }
+  // -----------------------------------
+  // GET Menu ACCESSORIES
+  // -----------------------------------
+  async getMenuAccessories(): Promise<AccessoryCategoryDto[]> {
+    const response = await this.authorizedPost('api/content/Catalog', {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok()) {
+      throw new Error(`Menu accessories error: ${response.status()}`);
+    }
+    const data: unknown = await response.json();
+    return data as AccessoryCategoryDto[];
+  }
+  // -----------------------------------
+  // GET Catalog ACCESSORIES
+  // -----------------------------------
+  async getCatalogAccessories(id: number): Promise<ProductAccessoriesDto[]> {
+    const start = performance.now();
+
+    try {
+      const response = await this.authorizedPost('api/items/ByTreeId', {
+        data: JSON.stringify(id),
         headers: {
-          accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'content-type': 'application/json',
+          'Content-Type': 'application/json',
         },
-        data: 'xlsx3',
-        timeout: 0,
       });
+
+      const elapsed = performance.now() - start;
+
+      console.log(
+        `[getCatalogAccessories] id=${id}, status=${response.status()}, time=${elapsed.toFixed(2)} ms`,
+      );
+
       if (!response.ok()) {
-        throw new Error(`Price XLS error: ${response.status()}`);
+        throw new Error(`Catalog accessories error: ${response.status()}`);
       }
 
-      // Получаем Excel как Buffer
-      const buffer = await response.body();
+      const data: unknown = await response.json();
 
-      return buffer;
+      return data as ProductAccessoriesDto[];
+    } catch (error) {
+      const elapsed = performance.now() - start;
+
+      console.error(
+        `[getCatalogAccessories] id=${id}, time=${elapsed.toFixed(2)} ms`,
+        error,
+      );
+
+      throw error;
+    }
   }
 }

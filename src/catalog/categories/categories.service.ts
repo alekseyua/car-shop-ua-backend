@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateCatalogDto } from './dto/create-catalog.dto';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { ParserService } from 'src/integrations/parser/parser.service';
 import { QueryCatalogDto } from './dto/query-catalog.dto';
@@ -12,52 +11,61 @@ import { buildPagination } from 'src/shared/common/helpers/pagination';
 export class CategoryService {
   constructor(
     private prisma: PrismaService,
-    private parser: ParserService
-  ){}
+    private parser: ParserService,
+  ) {}
 
-  async create(dto: CreateCatalogDto[], idAutotechnicsModification: number) {
+  async create(
+    dto: ResponseCatalogCarDto[],
+    idAutotechnicsModification: number,
+  ) {
     const modification = await this.prisma.modification.findMany({
       where: {
-        modificationAutotechId: Number(idAutotechnicsModification)
-      }
-    })
-   await this.prisma.catalogCar.createMany({
-    data: dto.map(item => ({
+        modificationAutotechId: Number(idAutotechnicsModification),
+      },
+    });
+    await this.prisma.catalogCar.createMany({
+      data: dto.map((item) => ({
         groupId: item.groupId,
         groupCode: item.groupCode,
         subGroupCode: item.subGroupCode,
         count: item.count,
-        typeAutotechId: item.typeId,
-        modificationId: modification[0].id
-    })),
-  });
+        typeAutotechId: idAutotechnicsModification,
+        modificationId: modification[0].id,
+      })),
+    });
     return 'This action adds a new catalog';
   }
 
-  async findAll(dto: QueryCatalogDto): Promise<PaginationResponse<ResponseCatalogCarDto>> {
-    const {typeAutotechId, page, limit} = dto;
-    const {skip, take} = buildPagination(page,limit);
+  async findAll(
+    dto: QueryCatalogDto,
+  ): Promise<PaginationResponse<ResponseCatalogCarDto>> {
+    const { typeAutotechId, page, limit } = dto;
+    const { skip, take } = buildPagination(page, limit);
     const [catalogDb, totalDb] = await this.prisma.$transaction([
       this.prisma.catalogCar.findMany({
         where: {
-          typeAutotechId: Number(typeAutotechId)
+          typeAutotechId: Number(typeAutotechId),
         },
         skip,
-        take
+        take,
       }),
-      this.prisma.catalogCar.count()
-    ])
-    if(!catalogDb.length){
-      // todo: 
+      this.prisma.catalogCar.count(),
+    ]);
+    if (!catalogDb.length) {
+      // todo:
       // пока возвращает полный список с парсинга
       // не сделано и не продумана логика по обновлению данных
-      const fromParser = await this.parser.getCatalog(typeAutotechId);
-      this.create(fromParser, typeAutotechId)
-      return createRequestPagination(fromParser, page, limit, fromParser.length);
-    }else{
+      const fromParser: ResponseCatalogCarDto[] =
+        await this.parser.getCatalog(typeAutotechId);
+      await this.create(fromParser, typeAutotechId);
+      return createRequestPagination(
+        fromParser,
+        page,
+        limit,
+        fromParser.length,
+      );
+    } else {
       return createRequestPagination(catalogDb, page, limit, totalDb);
     }
-
   }
-
 }

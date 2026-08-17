@@ -85,19 +85,21 @@ export const generateOrderNumber = () => {
   return `ORD-${Date.now()}-${randomUUID().slice(0, 8)}`;
 };
 
-export async function generateNickname(
-): Promise<string> {
-    const suffix = Math.floor(1000 + Math.random() * 9000);
-    const nickname = `user_${suffix}`;
+export function generateNickname(): string {
+  const suffix = Math.floor(1000 + Math.random() * 9000);
+  const nickname = `user_${suffix}`;
   return nickname;
 }
 
-export const normalizeImagePath = (img: string | []) => typeof img === 'object'? img.map((i:string)=>i.replace('tcd/','tcd-pic/')) :img.replace('tcd/', 'tcd-pic/');
+export const normalizeImagePath = (img: string | []) =>
+  typeof img === 'object'
+    ? img.map((i: string) => i.replace('tcd/', 'tcd-pic/'))
+    : img.replace('tcd/', 'tcd-pic/');
 
 export const weakCache = () => {
   const cache = new WeakMap();
   return {
-    set: (obj, value) => cache.set(obj,value),
-    get: (obj) => cache.get(obj)
-  }
-}
+    set: (obj, value) => cache.set(obj, value),
+    get: (obj) => cache.get(obj),
+  };
+};
