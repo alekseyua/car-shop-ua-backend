@@ -1,7 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { AddToCartDto } from './dto/add-cart.dto';
-import { generateOrderNumber, markupPercentPrice, normalizeImagePath } from 'src/shared/common/helpers/helpers';
+import {
+  generateOrderNumber,
+  markupPercentPrice,
+  normalizeImagePath,
+} from 'src/shared/common/helpers/helpers';
 import { CheckoutDto } from './dto/query-cart.dto';
 import { HistoryAction } from 'generated/prisma/browser';
 import { HistoryService } from 'src/history/history.service';
@@ -10,7 +18,7 @@ import { ParserService } from 'src/integrations/parser/parser.service';
 @Injectable()
 export class CartService {
   constructor(
-    private readonly prisma: PrismaService, 
+    private readonly prisma: PrismaService,
     private readonly parser: ParserService,
     private readonly historyService: HistoryService,
   ) {}
@@ -28,7 +36,6 @@ export class CartService {
           userId,
         },
       });
-      
     }
     return cart;
   }
@@ -36,7 +43,7 @@ export class CartService {
   async getCart(userId: number) {
     try {
       const cart = await this.getOrCreateCart(userId);
-  
+
       const result = await this.prisma.cart.findUnique({
         where: {
           id: cart.id,
@@ -45,50 +52,39 @@ export class CartService {
           items: true,
         },
       });
-  
+
       const total = result!.items.reduce(
-        (sum, item) =>
-          sum + Number(item.price) * item.quantity,
+        (sum, item) => sum + Number(item.price) * item.quantity,
         0,
       );
       return {
         ...result,
         total,
       };
-      
     } catch (error) {
       throw error;
     }
   }
 
-  async addItem(
-    userId: number,
-    dto: AddToCartDto,
-
-  ) {
+  async addItem(userId: number, dto: AddToCartDto) {
     const cart = await this.getOrCreateCart(userId);
 
-    const existing =
-      await this.prisma.cartItem.findUnique({
-        where: {
-          cartId_itemNo: {
-            cartId: cart.id,
-            itemNo: dto.itemNo,
-          },
+    const existing = await this.prisma.cartItem.findUnique({
+      where: {
+        cartId_itemNo: {
+          cartId: cart.id,
+          itemNo: dto.itemNo,
         },
-      });
+      },
+    });
 
     if (existing) {
       const updatedQuantity = existing.quantity + dto.quantity;
-      await this.historyService.create(
-        userId,
-        HistoryAction.UPDATE_CART,
-        {
-          itemNo: dto.itemNo,
-          quantity: updatedQuantity,
-          statusDelivery: dto.statusDelivery,
-        },
-      );
+      await this.historyService.create(userId, HistoryAction.UPDATE_CART, {
+        itemNo: dto.itemNo,
+        quantity: updatedQuantity,
+        statusDelivery: dto.statusDelivery,
+      });
       return await this.prisma.cartItem.update({
         where: {
           id: existing.id,
@@ -98,16 +94,12 @@ export class CartService {
         },
       });
     }
-    
-    await this.historyService.create(
-      userId,
-      HistoryAction.ADD_TO_CART,
-      {
-        itemNo: dto.itemNo,
-        quantity: dto.quantity,
-        statusDelivery: dto.statusDelivery,
-      },
-    );
+
+    await this.historyService.create(userId, HistoryAction.ADD_TO_CART, {
+      itemNo: dto.itemNo,
+      quantity: dto.quantity,
+      statusDelivery: dto.statusDelivery,
+    });
     const product = await this.parser.getItemDetails(dto.itemNo);
     return await this.prisma.cartItem.create({
       data: {
@@ -115,39 +107,32 @@ export class CartService {
         itemNo: dto.itemNo,
         title: product?.item?.description ?? '',
         price: markupPercentPrice(product?.item?.price ?? 0),
-        imageUrl: normalizeImagePath( product?.item?.firstPic as string) as string,
+        imageUrl: normalizeImagePath(
+          product?.item?.firstPic as string,
+        ) as string,
         quantity: dto.quantity,
         statusDelivery: dto.statusDelivery,
       },
     });
   }
 
-  async updateQuantity(
-    userId: number,
-    itemId: string,
-    quantity: number,
-  ) {
+  async updateQuantity(userId: number, itemId: string, quantity: number) {
     const cart = await this.getOrCreateCart(userId);
 
-    const item =
-      await this.prisma.cartItem.findFirst({
-        where: {
-          itemNo: itemId,
-          cartId: cart.id,
-        },
-      });
+    const item = await this.prisma.cartItem.findFirst({
+      where: {
+        itemNo: itemId,
+        cartId: cart.id,
+      },
+    });
 
     if (!item) {
       throw new NotFoundException();
     }
-    await this.historyService.create(
-      userId,
-      HistoryAction.UPDATE_CART,
-      {
-        itemNo: itemId,
-        quantity: quantity,
-      },
-    );
+    await this.historyService.create(userId, HistoryAction.UPDATE_CART, {
+      itemNo: itemId,
+      quantity: quantity,
+    });
     return this.prisma.cartItem.update({
       where: {
         id: item.id,
@@ -158,30 +143,22 @@ export class CartService {
     });
   }
 
-  async removeItem(
-    userId: number,
-    itemId: string,
-  ) {
+  async removeItem(userId: number, itemId: string) {
     const cart = await this.getOrCreateCart(userId);
 
-    const item =
-      await this.prisma.cartItem.findFirst({
-        where: {
-          itemNo: itemId,
-          cartId: cart.id,
-        },
-      });
+    const item = await this.prisma.cartItem.findFirst({
+      where: {
+        itemNo: itemId,
+        cartId: cart.id,
+      },
+    });
 
     if (!item) {
       throw new NotFoundException();
     }
-    await this.historyService.create(
-      userId,
-      HistoryAction.REMOVE_FROM_CART,
-      {
-        itemNo: itemId,
-      },
-    );
+    await this.historyService.create(userId, HistoryAction.REMOVE_FROM_CART, {
+      itemNo: itemId,
+    });
     await this.prisma.cartItem.delete({
       where: {
         id: item.id,
@@ -201,10 +178,7 @@ export class CartService {
         cartId: cart.id,
       },
     });
-    await this.historyService.create(
-      userId,
-      HistoryAction.CLEAR_CART,
-    );
+    await this.historyService.create(userId, HistoryAction.CLEAR_CART);
     return {
       success: true,
     };
@@ -222,14 +196,11 @@ export class CartService {
       });
 
       if (!cart || cart.items.length === 0) {
-        throw new BadRequestException(
-          'Cart is empty',
-        );
+        throw new BadRequestException('Cart is empty');
       }
 
       const totalPrice = cart.items.reduce(
-        (sum, item) =>
-          sum + Number(item.price) * item.quantity,
+        (sum, item) => sum + Number(item.price) * item.quantity,
         0,
       );
 
@@ -268,10 +239,7 @@ export class CartService {
           items: true,
         },
       });
-      await this.historyService.create(
-        userId,
-        HistoryAction.CREATE_ORDER,
-      );
+      await this.historyService.create(userId, HistoryAction.CREATE_ORDER);
 
       await tx.cartItem.deleteMany({
         where: {

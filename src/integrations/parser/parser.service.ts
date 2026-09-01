@@ -6,10 +6,6 @@ import {
   BrowserContext,
   chromium,
 } from 'playwright';
-import {
-  ResponseParserProductDto,
-  ResponseProductDetailDto,
-} from 'src/catalog/products/dto/response-products.dto';
 import { ResponseOemByItemDto } from 'src/catalog/oem/dto/response_oem_by_item.dto';
 import {
   AccessoryCategoryDto,
@@ -17,6 +13,10 @@ import {
 } from 'src/accessories/dto/response.accessories.dto';
 import { LoginResponse } from './interfaces/response.parser.dto';
 import { ResponseCatalogCarDto } from 'src/catalog/categories/dto/response-catalog.dto';
+import {
+  ResponseParserProductDto,
+  ResponseProductDetailParserDto,
+} from 'src/catalog/products/dto/response-products.dto';
 
 @Injectable()
 export class ParserService implements OnModuleInit, OnModuleDestroy {
@@ -202,7 +202,9 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
   // GET ITEM DETAILS
   // -----------------------------------
 
-  async getItemDetails(itemNo: string): Promise<ResponseProductDetailDto> {
+  async getItemDetails(
+    itemNo: string,
+  ): Promise<ResponseProductDetailParserDto> {
     const response = await this.authorizedPost(`/api/Items/ItemCard`, {
       data: JSON.stringify(itemNo),
       headers: {
@@ -213,7 +215,7 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Item details error: ${response.status()}`);
     }
     const data: unknown = await response.json();
-    return data as ResponseProductDetailDto;
+    return data as ResponseProductDetailParserDto;
   }
   // -----------------------------------
   // GET LIST ITEM OEM

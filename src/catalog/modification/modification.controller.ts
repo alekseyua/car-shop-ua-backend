@@ -1,8 +1,14 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ModificationService } from './modification.service';
 import { QueryCarModificationDto } from './dto/query-car_modfication.dto';
-import { ApiExtraModels, ApiOkResponse, ApiOperation, ApiQuery, getSchemaPath } from '@nestjs/swagger';
-import { ResponseCarModificationDto } from './dto/response-car_modification.dto';
+import {
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  getSchemaPath,
+} from '@nestjs/swagger';
+import { NormalizeCarModification } from './dto/response-car_modification.dto';
 import { MetaDto } from 'src/shared/common/pagination/dto/meta.dto';
 import { ParserService } from 'src/integrations/parser/parser.service';
 import { PaginationResponse } from 'src/shared/common/pagination/dto/paginated-response.dto';
@@ -19,7 +25,6 @@ export class ModificationController {
     description:
       'Возвращает список модификаций автомобиля по ID модели с поддержкой пагинации',
   })
-
   @ApiQuery({
     name: 'modelId',
     type: 'number',
@@ -27,8 +32,7 @@ export class ModificationController {
     example: '1',
     description: 'ID модели автомобиля',
   })
-  
-  @ApiExtraModels(ResponseCarModificationDto)
+  @ApiExtraModels(NormalizeCarModification)
   @ApiExtraModels(MetaDto)
   @ApiOkResponse({
     description: 'список модификаций автомобиля по ID модели успешно получен',
@@ -37,18 +41,19 @@ export class ModificationController {
         data: {
           type: 'array',
           items: {
-            $ref: getSchemaPath(ResponseCarModificationDto)
-          }
+            $ref: getSchemaPath(NormalizeCarModification),
+          },
         },
         meta: {
-          $ref: getSchemaPath(MetaDto)
-        }
-      }
-    }
+          $ref: getSchemaPath(MetaDto),
+        },
+      },
+    },
   })
-
   @Get()
-  findAll(@Query() dto: QueryCarModificationDto): Promise<PaginationResponse<ResponseCarModificationDto>> {
+  findAll(
+    @Query() dto: QueryCarModificationDto,
+  ): Promise<PaginationResponse<NormalizeCarModification>> {
     // this.parserService.getCatalog(28435);
     return this.ModificationService.findAll(dto);
   }

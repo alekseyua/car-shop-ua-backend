@@ -4,7 +4,7 @@ import { ParserService } from 'src/integrations/parser/parser.service';
 import { ResponseOemByItemDto } from './dto/response_oem_by_item.dto';
 import { CreateOemByItemDto } from './dto/create_oem_by_item.dto';
 import { PrismaService } from 'src/core/prisma/prisma.service';
-import { normoliseString } from 'src/shared/common/helpers/helpers';
+import { normalizeString } from 'src/shared/common/helpers/helpers';
 
 @Injectable()
 export class OemService {
@@ -16,7 +16,7 @@ export class OemService {
     await this.prisma.listOEMByItem.createMany({
       data: createOemByItemDto.map((item)=>({
         ...item,
-        itemNo: normoliseString(item.itemNo),
+        itemNo: normalizeString(item.itemNo),
       }))
     })
     return 'This action adds a new oemByItem';
@@ -30,7 +30,7 @@ export class OemService {
     try {
       const oemByItems = await this.prisma.listOEMByItem.findMany({
         where: {
-          itemNo: normoliseString(id),
+          itemNo: normalizeString(id),
         }
       })
       if(oemByItems.length > 0) {

@@ -8,6 +8,59 @@ import { PrismaService } from 'src/core/prisma/prisma.service';
 import { GarageFromPrisma, GarageResponseDto } from './dto/response-garage.dto';
 import { UpdateGarageDto } from './dto/update-garage.dto';
 import { Prisma } from 'generated/prisma/client';
+import { normalizeGarageModification } from 'src/shared/common/helpers/helpers';
+
+export const garageSelect = {
+  id: true,
+  name: true,
+  comment: true,
+  isDefault: true,
+
+  cars: {
+    select: {
+      id: true,
+      vin: true,
+      nickname: true,
+
+      modification: {
+        select: {
+          id: true,
+          modificationAutotechId: true,
+          typeName: true,
+          typeRange: true,
+          kw: true,
+          hp: true,
+          image: true,
+          modelId: true,
+
+          model: {
+            select: {
+              model: true,
+
+              brand: {
+                select: {
+                  mark: true,
+                },
+              },
+            },
+          },
+
+          engineType: {
+            select: {
+              name: true,
+            },
+          },
+
+          bodyType: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.GarageSelect;
 
 @Injectable()
 export class GarageService {
@@ -21,22 +74,24 @@ export class GarageService {
           ...gc,
           vin: gc.vin ?? '',
           nickname: gc.nickname ?? '',
-          modification: {
-            ...gc.modification,
-            brand: gc.modification.model.brand.mark,
-            model: gc.modification.model.model,
-            typeName: gc.modification.typeName ?? '',
-            typeRange: gc.modification.typeRange ?? '',
-            kw: gc.modification.kw ?? '',
-            hp: gc.modification.hp ?? '',
-            bodyType: {
-              ...gc.modification.bodyType,
-              name: gc.modification.bodyType.name ?? '',
-            },
-          },
+          modification: normalizeGarageModification(gc.modification),
         })),
       ],
     }));
+  }
+
+  async findAll(userId: number): Promise<GarageResponseDto[]> {
+    const garage = await this.prisma.garage.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        isDefault: 'desc',
+      },
+      select: garageSelect,
+    });
+    const data = this.normalizeGarage(garage);
+    return data;
   }
 
   async create(
@@ -78,54 +133,6 @@ export class GarageService {
       },
     });
     return { ...response, cars: [] };
-  }
-
-  async findAll(userId: number): Promise<GarageResponseDto[]> {
-    const garage = await this.prisma.garage.findMany({
-      where: {
-        userId,
-      },
-      orderBy: {
-        isDefault: 'desc',
-      },
-      select: {
-        id: true,
-        name: true,
-        comment: true,
-        isDefault: true,
-        cars: {
-          select: {
-            id: true,
-            vin: true,
-            nickname: true,
-            modification: {
-              select: {
-                id: true,
-                modificationAutotechId: true,
-                typeName: true,
-                model: {
-                  select: {
-                    model: true,
-                    brand: {
-                      select: {
-                        mark: true,
-                      },
-                    },
-                  },
-                },
-                typeRange: true,
-                engineType: true,
-                kw: true,
-                hp: true,
-                bodyType: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    const data = this.normalizeGarage(garage);
-    return data;
   }
 
   async remove(id: number, userId: number) {

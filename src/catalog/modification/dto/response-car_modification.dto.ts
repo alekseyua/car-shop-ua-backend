@@ -1,154 +1,57 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Prisma } from 'generated/prisma/client';
+import { modificationInclude } from '../modification.service';
 
-export class ResponseCarModificationDto {
-    @ApiProperty({
-        example: 1,
-        description: 'ID модификации',
-    })
-    "id": Number;
+export class NormalizeCarModification {
+  @ApiProperty()
+  'id': number;
 
-    @ApiProperty({
-        example: 119512,
-        description: 'ID модификации в Autotech',
-    })
-    "modificationAutotechId": Number;
+  @ApiProperty()
+  'name': string;
 
-    @ApiProperty({
-        example: '1.4 (348)',
-        description: 'Название модификации',
-    })
-    "typeName": String | null;
+  @ApiProperty()
+  'range': string;
 
-    @ApiProperty({
-        example: '2016.03 - ',
-        description: 'Период выпуска',
-    })
-    "typeRange": String | null;
+  @ApiProperty()
+  'kw': number;
 
-    @ApiProperty({
-        example: '125',
-        description: 'Мощность в кВт',
-    })
-    "kw": String | null;
+  @ApiProperty()
+  'hp': number;
 
-    @ApiProperty({
-        example: '170',
-        description: 'Мощность в лошадиных силах',
-    })
-    "hp": String | null;
+  @ApiProperty()
+  'engineType': string;
 
-    @ApiProperty({
-        example: 1368,
-        description: 'Объём двигателя в см³',
-    })
-    "ccmTech": Number | null;
+  @ApiProperty()
+  'bodyType': string;
 
-    @ApiProperty({
-        example: '1.4',
-        description: 'Объём двигателя',
-    })
-    "capacity": any;
+  @ApiProperty()
+  'modificationAutotechId': number;
 
-    @ApiProperty({
-        example: 4,
-        description: 'Количество цилиндров',
-    })
-    "cylinders": Number | null;
+  @ApiProperty()
+  'image': string;
 
-    @ApiProperty({
-        example: 4,
-        description: 'Количество клапанов',
-    })
-    "valve": Number | null;
+  @ApiProperty()
+  'model': string;
 
-    @ApiProperty({
-        example: 0,
-        description: 'Тоннаж',
-    })
-    "tonnage": Number | null;
+  @ApiProperty()
+  'brand': string;
 
-    @ApiProperty({
-        example: false,
-        description: 'Активна ли модификация',
-    })
-    "active": Boolean;
+  @ApiPropertyOptional({
+    nullable: true,
+  })
+  'modelId'?: number | null;
 
-    @ApiProperty({
-        example: '',
-        description: 'Изображение модификации',
-    })
-    "image": String | null;
+  // @ApiProperty()
+  // 'typeName': string;
 
-    @ApiProperty({
-        example: 1,
-        description: 'ID типа топлива',
-    })
-    "fuelId": Number;
+  // @ApiProperty()
+  // 'typeRange': string;
+}
 
-    @ApiProperty({
-        example: 1,
-        description: 'ID типа двигателя',
-    })
-    "engineTypeId": Number;
+export type ModificationFromDb = Prisma.ModificationGetPayload<{
+  include: typeof modificationInclude;
+}>;
 
-    @ApiProperty({
-        example: 1,
-        description: 'ID системы подачи топлива',
-    })
-    "fuelPreparationId": Number;
-
-    @ApiProperty({
-        example: 1,
-        description: 'ID типа кузова',
-    })
-    "bodyTypeId": Number;
-
-    @ApiProperty({
-        example: 1,
-        description: 'ID типа привода',
-    })
-    "driveTypeId": Number;
-
-    @ApiProperty({
-        example: 1,
-        description: 'ID модели автомобиля',
-    })
-    "modelId": Number;
-
-    @ApiProperty({
-        example: {
-            mark: 'Opel'
-        },
-        description: 'Бренд автомобиля',
-    })
-    "brand": {
-        "mark": String;
-    }
-    @ApiProperty({
-        example: {
-            model: 'Astra'
-        },
-        description: 'Модель автомобиля',
-    })
-    "model": {
-        "model": String;
-    }
-    @ApiProperty({
-        example: {
-            name: 'Бензин'
-        },
-        description: 'Тип двигателя',
-    })
-    "engineType": {
-        "name": String;
-    }
-    @ApiProperty({
-        example: {
-            name: 'Седан'
-        },
-        description: 'Тип кузова',
-    })
-    "bodyType": {
-        "name": String;
-    }
+export class ModificationsResponseFromDb {
+  'modifications': ModificationFromDb[];
 }

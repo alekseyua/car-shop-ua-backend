@@ -12,20 +12,6 @@ class CriteriaDto {
   'value': string;
 }
 
-// class StockItemDto {
-//   @ApiProperty()
-//   'L': string;
-
-//   @ApiProperty()
-//   'C': string;
-
-//   @ApiProperty()
-//   'Q': string;
-
-//   @ApiProperty()
-//   'R': number;
-// }
-
 export class ResponseParserProductDto {
   @ApiProperty()
   'comId': number;
@@ -145,42 +131,41 @@ class ResponseStockDto {
   @ApiProperty()
   'statusDelivery': DeliveryStatus;
 }
-export class ResponseProductDto {
-  @ApiProperty()
-  'itemNo': string;
-  @ApiProperty()
-  'brand': string;
-  @ApiProperty()
-  'quantity': number;
-  @ApiProperty()
-  'description': string;
-  @ApiProperty()
-  'searchDescription': string;
-  @ApiProperty()
-  'inStock': boolean;
-  @ApiProperty()
-  'firstPic': string;
-  @ApiProperty()
-  'criteriaLine': string;
+// export class ResponseProductDto {
+//   @ApiProperty()
+//   'itemNo': string;
+//   @ApiProperty()
+//   'brand': string;
+//   @ApiProperty()
+//   'quantity': number;
+//   @ApiProperty()
+//   'description': string;
+//   @ApiProperty()
+//   'searchDescription': string;
+//   @ApiProperty()
+//   'inStock': boolean;
+//   @ApiProperty()
+//   'firstPic': string;
+//   @ApiProperty()
+//   'criteriaLine': string;
 
-  @ApiProperty()
-  'longText'?: string;
-  @ApiProperty()
-  'groupCode'?: string;
-  @ApiProperty()
-  'subGroupCode'?: string;
-  
-  @ApiProperty()
-  'retail': number;
-  @ApiProperty()
-  'price': number;
-  @ApiProperty()
-  'salesUoM': string;
-  @ApiProperty({ type: () => [CriteriaDto] })
-  'criterias': CriteriaDto[];
-  @ApiProperty({ type: () => [ResponseStockDto] })
-  'stock': ResponseStockDto[];
-}
+//   @ApiProperty()
+//   'longText'?: string;
+//   @ApiProperty()
+//   'groupCode'?: string;
+//   @ApiProperty()
+//   'subGroupCode'?: string;
+//   @ApiProperty()
+//   'retail': number;
+//   @ApiProperty()
+//   'price': number;
+//   @ApiProperty()
+//   'salesUoM': string;
+//   @ApiProperty({ type: () => [CriteriaDto] })
+//   'criterias': CriteriaDto[];
+//   @ApiProperty({ type: () => [ResponseStockDto] })
+//   'stock': ResponseStockDto[];
+// }
 
 // detail product
 export class ProductItem {
@@ -229,7 +214,7 @@ export class ProductItem {
   @ApiProperty({
     description: 'JSON string of stock object',
   })
-  'stock': ResponseStockDto[] | string;
+  'stock': string;
   @ApiPropertyOptional()
   'inAction': boolean | null;
   @ApiProperty()
@@ -260,15 +245,6 @@ export class ProductItem {
   'checkSend': boolean;
 }
 
-export class ProductCriteria {
-  @ApiProperty()
-  'itemNo': string;
-  @ApiProperty()
-  'criteria': string;
-  @ApiProperty()
-  'value': string;
-}
-
 export class ProductFile {
   @ApiProperty()
   'comID': string;
@@ -289,24 +265,63 @@ export class ProductFile {
   @ApiProperty()
   'fileDescript': string;
 }
-export class ResponseProductDetailDto {
+export class ResponseProductDetailParserDto {
   @ApiProperty({
     type: () => ProductItem,
-    nullable: true,
   })
-  'item': ProductItem | null;
+  'item': ProductItem;
   @ApiProperty({
     type: () => [ProductItem],
-    nullable: true,
   })
-  'replaces': ProductItem[] | null;
-  @ApiProperty({
-    nullable: true,
-  })
-  'pictures': string[] | null;
+  'replaces': ProductItem[];
+  @ApiProperty()
+  'pictures': string[];
   @ApiProperty({
     type: () => [ProductFile],
-    nullable: true,
   })
-  'files': ProductFile[] | null;
+  'files': ProductFile[];
+}
+
+export class NormalizeProductItem {
+  @ApiProperty()
+  'itemNo': string;
+  @ApiProperty()
+  'brand': string;
+  @ApiProperty()
+  'description': string;
+  @ApiProperty()
+  'searchDescription': string;
+  @ApiProperty()
+  'inStock': boolean;
+  @ApiProperty()
+  'firstPic': string;
+  @ApiProperty()
+  'retail': number;
+  @ApiProperty()
+  'price': number;
+  @ApiProperty({
+    type: [ResponseStockDto],
+  })
+  'stock': ResponseStockDto[];
+  @ApiProperty({
+    description: 'min order',
+  })
+  'salesOrderMultiple': number;
+  @ApiProperty({ type: [CriteriaDto] })
+  'criterias': CriteriaDto[];
+}
+
+export class NormalizeResponseProductDetailDto {
+  @ApiProperty({
+    type: () => NormalizeProductItem,
+  })
+  'item': NormalizeProductItem;
+  @ApiProperty({
+    type: () => [NormalizeProductItem],
+  })
+  'replaces': NormalizeProductItem[];
+  @ApiProperty({
+    type: () => [ProductFile],
+  })
+  'files': ProductFile[];
 }

@@ -17,20 +17,20 @@ export interface ResponseStockDto {
   statusDelivery: DeliveryStatus;
 }
 
-export interface Stock {
+export interface StockItem {
   L: string;
   C: string;
   Q: string;
   R: number;
 }
 
-export type ParsedStock = {
-  Stock: Stock[];
-};
+export interface Stock {
+  Stock: StockItem[];
+}
 
+export type ParsedStock = Stock;
 
 export enum Role {
   USER = 'USER',
   ADMIN = 'ADMIN',
 }
-

@@ -1,8 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  GarageCarFromPrisma,
-  GarageCarResponseDto,
-} from 'src/garage-car/dto/response-garage-car';
+import { GarageCarResponseDto } from 'src/garage-car/dto/response-garage-car';
 
 export class GarageResponseDto {
   @ApiProperty()
@@ -19,14 +16,43 @@ export class GarageResponseDto {
 
   @ApiProperty()
   isDefault!: boolean;
-  // @ApiProperty({type: Array})
-  // garageCars!: GarageCarResponseDto[]
 }
 
-export class GarageFromPrisma {
-  id!: number;
-  name!: string;
-  comment?: string | null;
-  isDefault!: boolean;
-  cars!: GarageCarFromPrisma[];
-}
+export type GarageFromPrisma = {
+  id: number;
+  name: string;
+  comment: string | null;
+  isDefault: boolean;
+
+  cars: {
+    id: number;
+    vin: string | null;
+    nickname: string | null;
+
+    modification: {
+      id: number;
+      modificationAutotechId: number;
+      typeName: string | null;
+      typeRange: string | null;
+      kw: string | null;
+      hp: string | null;
+      image: string | null;
+      modelId: number;
+
+      model: {
+        model: string;
+        brand: {
+          mark: string;
+        };
+      };
+
+      engineType: {
+        name: string;
+      };
+
+      bodyType: {
+        name: string;
+      };
+    };
+  }[];
+};

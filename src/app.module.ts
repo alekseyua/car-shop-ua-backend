@@ -22,6 +22,7 @@ import { GarageCarModule } from './garage-car/garage-car.module';
 import { ExcelModule } from './excel/excel.module';
 import { AccessoriesService } from './accessories/accessories.service';
 import { AccessoriesModule } from './accessories/accessories.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { AccessoriesModule } from './accessories/accessories.module';
     GarageCarModule,
     ExcelModule,
     AccessoriesModule,
+    SearchModule,
   ],
   controllers: [],
   providers: [AccessoriesService],
