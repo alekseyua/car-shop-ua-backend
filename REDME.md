@@ -6,6 +6,7 @@
     Содержимое:
     user default off
     user example_username on >example_password ~* &* +@all
+
     б) # DOCKER 
     docker run -d \
   --name redis-stack \
@@ -22,6 +23,14 @@
         REDIS_USER_PASSWORD=example_password
         REDIS_PORT=6379
         REDIS_HOST=you_host
+    *****
+         connect redis from redis-cli
+          redis-cli \                                                   
+            -h 74.50.65.152 \
+            -p 6381 \
+            --user ***** \
+            --pass '**********'
+    *****
 2. Поднять postgress через docker
     
 

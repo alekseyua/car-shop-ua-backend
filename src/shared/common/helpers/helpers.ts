@@ -176,20 +176,25 @@ export const normalizeResponseProductItem = (
   };
 };
 
-export const normalizeReplaces = (
+export const normalizeReplaces = async (
   replaces: ProductItem[],
-  cachePrice: productCachePriceDto | null,
-): NormalizeProductItem[] =>
-  replaces?.length === 0
-    ? []
-    : replaces
-        ?.filter((item: ProductItem) => item.inStock)
-        ?.map((item: ProductItem): NormalizeProductItem => {
-          if (!cachePrice) {
-            console.log('itemNo - ', item.itemNo, '---', item.stock);
-          }
-          return normalizeResponseProductItem(item, cachePrice);
-        });
+  redis: IoredisService,
+): Promise<NormalizeProductItem[]> => {
+  if (!replaces?.length) {
+    return [];
+  }
+  return Promise.all(
+    replaces
+      ?.filter((item: ProductItem) => item.inStock)
+      ?.map(async (item: ProductItem): Promise<NormalizeProductItem> => {
+        const cachePrice = await getProductFromPrice(item.itemNo, redis);
+        if (!cachePrice) {
+          console.log('itemNo - ', item.itemNo, '---', item.stock);
+        }
+        return normalizeResponseProductItem(item, cachePrice);
+      }),
+  );
+};
 
 export const normalizeModification = (
   modification: ModificationFromDb,

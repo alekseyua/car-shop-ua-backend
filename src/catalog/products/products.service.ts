@@ -39,6 +39,12 @@ export class ProductsService {
           cacheProductsObj.map(async (item: ProductItem) => {
             const dataFromPriceCacheObj: productCachePriceDto | null =
               await getProductFromPrice(item.itemNo, this.redis);
+              console.log({
+                item,
+                itemStock: item.stock,
+                dataFromPriceCacheObj,
+                stock: dataFromPriceCacheObj?.stock.Stock,
+              });
             return normalizeResponseProductItem(item, dataFromPriceCacheObj);
           }),
         );
@@ -54,10 +60,10 @@ export class ProductsService {
           return normalizeResponseProductItem(item, dataFromPriceCacheObj);
         }),
       );
-      if (products) {
+      if (getProduct) {
         await this.redis.set(
           `${typeId}-${groupId}-products`,
-          JSON.stringify(products),
+          JSON.stringify(getProduct),
         );
       }
       console.log('Products from autotechnics');
@@ -88,9 +94,9 @@ export class ProductsService {
             cacheProductOne.item,
             dataFromPriceCacheObj,
           ),
-          replaces: normalizeReplaces(
+          replaces: await normalizeReplaces(
             cacheProductOne.replaces,
-            dataFromPriceCacheObj,
+            this.redis,
           ),
         };
       }
@@ -111,7 +117,7 @@ export class ProductsService {
           response.item,
           dataFromPriceCacheObj,
         ),
-        replaces: normalizeReplaces(response.replaces, dataFromPriceCacheObj),
+        replaces: await normalizeReplaces(response.replaces, this.redis),
       };
       return res;
     } catch (error) {
