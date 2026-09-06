@@ -7,13 +7,16 @@ import { PrismaService } from 'src/core/prisma/prisma.service';
 import { AddToCartDto } from './dto/add-cart.dto';
 import {
   generateOrderNumber,
+  getProductFromPrice,
   markupPercentPrice,
+  normalizeDoubleNumber,
   normalizeImagePath,
 } from 'src/shared/common/helpers/helpers';
 import { CheckoutDto } from './dto/query-cart.dto';
 import { HistoryAction } from 'generated/prisma/browser';
 import { HistoryService } from 'src/history/history.service';
 import { ParserService } from 'src/integrations/parser/parser.service';
+import { IoredisService } from 'src/core/ioredis/ioredis.service';
 
 @Injectable()
 export class CartService {
@@ -21,6 +24,7 @@ export class CartService {
     private readonly prisma: PrismaService,
     private readonly parser: ParserService,
     private readonly historyService: HistoryService,
+    private readonly redis: IoredisService,
   ) {}
 
   private async getOrCreateCart(userId: number) {
@@ -41,29 +45,44 @@ export class CartService {
   }
 
   async getCart(userId: number) {
-    try {
-      const cart = await this.getOrCreateCart(userId);
+    const cart = await this.getOrCreateCart(userId);
+    const result = await this.prisma.cart.findUnique({
+      where: {
+        id: cart.id,
+      },
+      include: {
+        items: true,
+      },
+    });
+    const products = await Promise.all(
+      result!.items.map(async (item) => {
+        const priceFromCache = await getProductFromPrice(
+          item.itemNo,
+          this.redis,
+        );
 
-      const result = await this.prisma.cart.findUnique({
-        where: {
-          id: cart.id,
-        },
-        include: {
-          items: true,
-        },
-      });
+        const price =
+          priceFromCache?.price != null
+            ? Number(priceFromCache.price)
+            : Number(item.price);
 
-      const total = result!.items.reduce(
-        (sum, item) => sum + Number(item.price) * item.quantity,
-        0,
-      );
-      return {
-        ...result,
-        total,
-      };
-    } catch (error) {
-      throw error;
-    }
+        return {
+          ...item,
+          price: markupPercentPrice(normalizeDoubleNumber(price)),
+        };
+      }),
+    );
+    console.log(products);
+    console.log(result?.items);
+    const total = products.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+    return {
+      ...result,
+      items: products.toSorted((a, b) => a.id - b.id),
+      total,
+    };
   }
 
   async addItem(userId: number, dto: AddToCartDto) {
@@ -107,9 +126,7 @@ export class CartService {
         itemNo: dto.itemNo,
         title: product?.item?.description ?? '',
         price: markupPercentPrice(product?.item?.price ?? 0),
-        imageUrl: normalizeImagePath(
-          product?.item?.firstPic as string,
-        ) as string,
+        imageUrl: normalizeImagePath(product?.item?.firstPic) as string,
         quantity: dto.quantity,
         statusDelivery: dto.statusDelivery,
       },

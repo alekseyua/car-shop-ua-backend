@@ -7,9 +7,11 @@ import {
   NormalizeResponseProductDetailDto,
   NormalizeProductItem,
   ProductItem,
+  ProductFile,
 } from './dto/response-products.dto';
 import {
   getProductFromPrice,
+  normalizeImagePath,
   normalizeReplaces,
   normalizeResponseProductItem,
 } from 'src/shared/common/helpers/helpers';
@@ -88,12 +90,20 @@ export class ProductsService {
           cacheProductOne.item.itemNo,
           this.redis,
         );
+        const files = cacheProductOne.files.map((f: ProductFile) => {
+          const pathName = normalizeImagePath(f.pathName) as string;
+          return {
+            ...f,
+            pathName,
+          };
+        });
         return {
           ...cacheProductOne,
           item: normalizeResponseProductItem(
             cacheProductOne.item,
             dataFromPriceCacheObj,
           ),
+          files,
           replaces: await normalizeReplaces(
             cacheProductOne.replaces,
             this.redis,
@@ -110,13 +120,20 @@ export class ProductsService {
       if (response) {
         await this.redis.set('product_one:' + id, JSON.stringify(response));
       }
-
+      const files = response.files.map((f: ProductFile) => {
+        const pathName = normalizeImagePath(f.pathName) as string;
+        return {
+          ...f,
+          pathName,
+        };
+      });
       const res: NormalizeResponseProductDetailDto = {
         ...response,
         item: normalizeResponseProductItem(
           response.item,
           dataFromPriceCacheObj,
         ),
+        files,
         replaces: await normalizeReplaces(response.replaces, this.redis),
       };
       return res;

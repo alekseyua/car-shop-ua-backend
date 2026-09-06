@@ -4,11 +4,8 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
-  Req,
-  Request,
   UseGuards,
 } from '@nestjs/common';
 
@@ -25,33 +22,21 @@ import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 @Controller('cart')
 @UseGuards(JwtAuthGuard)
 export class CartController {
-  constructor(
-    private readonly cartService: CartService,
-  ) { }
+  constructor(private readonly cartService: CartService) {}
 
   @Get()
-  getCart(
-    @CurrentUser() user: Express.User
-  ) {
+  getCart(@CurrentUser() user: Express.User) {
     const userId = user.userId;
-    return this.cartService.getCart(
-      userId,
-    );
+    return this.cartService.getCart(userId);
   }
 
   @Post('items')
-  addItem(
-    @CurrentUser() user: Express.User,
-    @Body() dto: AddToCartDto,
-  ) {
-    return this.cartService.addItem(
-      user.userId,
-      dto,
-    );
+  addItem(@CurrentUser() user: Express.User, @Body() dto: AddToCartDto) {
+    return this.cartService.addItem(user.userId, dto);
   }
 
   @ApiOkResponse({
-    description: 'Quantity update'
+    description: 'Quantity update',
   })
   @Patch('update-quantity/:id')
   updateQuantity(
@@ -59,39 +44,21 @@ export class CartController {
     @Param('id') itemId: string,
     @Body() dto: UpdateCartQuantityDto,
   ) {
-    return this.cartService.updateQuantity(
-      user.userId,
-      itemId,
-      dto.quantity,
-    );
+    return this.cartService.updateQuantity(user.userId, itemId, dto.quantity);
   }
 
   @Delete('items/:id')
-  removeItem(
-    @CurrentUser() user: Express.User,
-    @Param('id') itemId: string,
-  ) {
-    return this.cartService.removeItem(
-      user.userId,
-      itemId,
-    );
+  removeItem(@CurrentUser() user: Express.User, @Param('id') itemId: string) {
+    return this.cartService.removeItem(user.userId, itemId);
   }
 
   @Delete()
   clearCart(@CurrentUser() user: Express.User) {
-    return this.cartService.clearCart(
-      user.userId,
-    );
+    return this.cartService.clearCart(user.userId);
   }
 
   @Post('checkout')
-  checkout(
-    @CurrentUser() user: Express.User,
-    @Body() dto: CheckoutDto,
-  ) {
-    return this.cartService.createFromCart(
-      user.userId,
-      dto,
-    );
+  checkout(@CurrentUser() user: Express.User, @Body() dto: CheckoutDto) {
+    return this.cartService.createFromCart(user.userId, dto);
   }
 }

@@ -23,6 +23,7 @@ import { ExcelModule } from './excel/excel.module';
 import { AccessoriesService } from './accessories/accessories.service';
 import { AccessoriesModule } from './accessories/accessories.module';
 import { SearchModule } from './search/search.module';
+import { ProxyModule } from './proxy/proxy.module';
 
 @Module({
   imports: [
@@ -49,9 +50,9 @@ import { SearchModule } from './search/search.module';
     ExcelModule,
     AccessoriesModule,
     SearchModule,
+    ProxyModule,
   ],
   controllers: [],
   providers: [AccessoriesService],
-
 })
-export class AppModule { }
+export class AppModule {}

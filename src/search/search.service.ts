@@ -5,6 +5,7 @@ import {
   SearchResultResponse,
 } from './dto/response-search.dto';
 import { buildPagination } from 'src/shared/common/helpers/pagination';
+import { markupPercentPrice, normalizeDoubleNumber } from 'src/shared/common/helpers/helpers';
 
 @Injectable()
 export class SearchService {
@@ -40,7 +41,10 @@ export class SearchService {
         product[fields[j]] = fields[j + 1];
       }
 
-      products.push(product as unknown as RedisSearchResult);
+      products.push({
+        ...product,
+        price: markupPercentPrice(normalizeDoubleNumber(product.price)),
+      } as unknown as RedisSearchResult);
     }
 
     const resultItemNo = (await this.redis.search(
@@ -58,7 +62,10 @@ export class SearchService {
         product[fields[j]] = fields[j + 1];
       }
 
-      products.push(product as unknown as RedisSearchResult);
+      products.push({
+        ...product,
+        price: markupPercentPrice(normalizeDoubleNumber(product.price)),
+      } as unknown as RedisSearchResult);
     }
     return {
       total,
