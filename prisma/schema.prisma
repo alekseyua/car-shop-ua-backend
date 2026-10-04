@@ -184,6 +184,15 @@ model User {
 
 }
 
+model GuestSession {
+  id           String         @id @default(uuid())
+  createdAt    DateTime       @default(now())
+  expiresAt    DateTime
+
+  cart         Cart?
+  orders       Order[]
+}
+
 model Address {
   id         Int    @id @default(autoincrement())
 
@@ -236,8 +245,10 @@ model Order {
   paidAt DateTime?
   shippedAt DateTime?
   deliveredAt DateTime?
-  userId     Int
-  user       User @relation(fields: [userId], references: [id])
+  userId     Int?
+  guestSessionId String?
+  user       User? @relation(fields: [userId], references: [id])
+  guestSession   GuestSession? @relation(fields: [guestSessionId], references: [id])
 
   deliveryCity String
   deliveryPhone String
@@ -259,6 +270,10 @@ model Order {
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@index([guestSessionId])
+  @@index([userId])
+
 }
 
 model OrderItem {
@@ -303,6 +318,7 @@ enum HistoryAction {
   UPDATE_CART
   DELETE_CART
   CLEAR_CART
+  SYNC_CART
 
   ADD_TO_FAVORITES
   REMOVE_FROM_FAVORITES
@@ -335,12 +351,17 @@ model Cart {
   id Int @id @default(autoincrement())
 
   userId Int @unique
-  user User @relation(fields: [userId], references: [id])
+  guestSessionId String?       @unique
+  user User? @relation(fields: [userId], references: [id])
+  guestSession   GuestSession? @relation(fields: [guestSessionId], references: [id])
 
   items CartItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([guestSessionId])
+  @@index([userId])
 }
 
 model CartItem {

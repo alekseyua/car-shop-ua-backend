@@ -4,15 +4,9 @@ import { PrismaService } from 'src/core/prisma/prisma.service';
 
 @Injectable()
 export class HistoryService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(
-    userId: number,
-    action: HistoryAction,
-    metadata?: any,
-  ) {
+  async create(userId: number, action: HistoryAction, metadata?: any) {
     return this.prisma.history.create({
       data: {
         userId,

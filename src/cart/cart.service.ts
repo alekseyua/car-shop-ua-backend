@@ -17,6 +17,7 @@ import { HistoryAction } from 'generated/prisma/browser';
 import { HistoryService } from 'src/history/history.service';
 import { ParserService } from 'src/integrations/parser/parser.service';
 import { IoredisService } from 'src/core/ioredis/ioredis.service';
+import { CartResponse } from './dto/response.cart.dto';
 
 @Injectable()
 export class CartService {
@@ -44,7 +45,7 @@ export class CartService {
     return cart;
   }
 
-  async getCart(userId: number) {
+  async getCart(userId: number): Promise<CartResponse> {
     const cart = await this.getOrCreateCart(userId);
     const result = await this.prisma.cart.findUnique({
       where: {
@@ -72,95 +73,186 @@ export class CartService {
         };
       }),
     );
-    console.log(products);
-    console.log(result?.items);
+    // console.log(products);
+    // console.log(result?.items);
     const total = products.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0,
     );
     return {
       ...result,
+      id: result!.id,
       items: products.toSorted((a, b) => a.id - b.id),
       total,
     };
   }
 
+  async syncItemsCart(
+    userId: number,
+    dto: AddToCartDto[],
+  ): Promise<CartResponse> {
+    const cart = await this.getOrCreateCart(userId);
+
+    for (const item of dto) {
+      const product = await this.parser.getItemDetails(item.itemNo);
+      await this.prisma.cartItem.upsert({
+        where: {
+          cartId_itemNo: {
+            cartId: cart.id,
+            itemNo: item.itemNo,
+          },
+        },
+
+        // Товар уже существует
+        update: {
+          quantity: {
+            increment: item.quantity,
+          },
+          statusDelivery: item.statusDelivery,
+        },
+
+        // Товара ещё нет
+        create: {
+          cartId: cart.id,
+          itemNo: item.itemNo,
+          title: product?.item?.description ?? '',
+          price: markupPercentPrice(product?.item?.price ?? 0),
+          imageUrl: normalizeImagePath(product?.item?.firstPic) as string,
+          quantity: item.quantity,
+          statusDelivery: item.statusDelivery,
+        },
+      });
+
+      // История
+      await this.historyService.create(userId, HistoryAction.SYNC_CART, {
+        itemNo: item.itemNo,
+        quantity: item.quantity,
+        statusDelivery: item.statusDelivery,
+      });
+    }
+    return await this.getCart(userId);
+  }
+
   async addItem(userId: number, dto: AddToCartDto) {
     const cart = await this.getOrCreateCart(userId);
 
-    const existing = await this.prisma.cartItem.findUnique({
-      where: {
-        cartId_itemNo: {
+    const product = await this.parser.getItemDetails(dto.itemNo);
+
+    await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.cartItem.findUnique({
+        where: {
+          cartId_itemNo: {
+            cartId: cart.id,
+            itemNo: dto.itemNo,
+          },
+        },
+        select: {
+          quantity: true,
+        },
+      });
+
+      const cartItem = await tx.cartItem.upsert({
+        where: {
+          cartId_itemNo: {
+            cartId: cart.id,
+            itemNo: dto.itemNo,
+          },
+        },
+
+        update: {
+          quantity: {
+            increment: dto.quantity,
+          },
+          statusDelivery: dto.statusDelivery,
+        },
+
+        create: {
           cartId: cart.id,
           itemNo: dto.itemNo,
+          title: product?.item?.description ?? '',
+          price: markupPercentPrice(product?.item?.price ?? 0),
+          imageUrl: normalizeImagePath(product?.item?.firstPic) as string,
+          quantity: dto.quantity,
+          statusDelivery: dto.statusDelivery,
         },
-      },
-    });
-
-    if (existing) {
-      const updatedQuantity = existing.quantity + dto.quantity;
-      await this.historyService.create(userId, HistoryAction.UPDATE_CART, {
-        itemNo: dto.itemNo,
-        quantity: updatedQuantity,
-        statusDelivery: dto.statusDelivery,
       });
-      return await this.prisma.cartItem.update({
+
+      if (existing) {
+        await tx.history.create({
+          data: {
+            userId,
+            action: HistoryAction.UPDATE_CART,
+            metadata: {
+              itemNo: dto.itemNo,
+              quantity: existing.quantity + dto.quantity,
+              statusDelivery: dto.statusDelivery,
+            },
+          },
+        });
+      } else {
+        await tx.history.create({
+          data: {
+            userId,
+            action: HistoryAction.ADD_TO_CART,
+            metadata: {
+              itemNo: dto.itemNo,
+              quantity: dto.quantity,
+              statusDelivery: dto.statusDelivery,
+            },
+          },
+        });
+      }
+    });
+    return this.getCart(userId);
+  }
+
+  async updateQuantity(
+    userId: number,
+    itemId: string,
+    quantity: number,
+  ): Promise<CartResponse> {
+    const cart = await this.getOrCreateCart(userId);
+console.log({quantity})
+    await this.prisma.$transaction(async (tx) => {
+      const item = await tx.cartItem.findUnique({
         where: {
-          id: existing.id,
+          cartId_itemNo: {
+            cartId: cart.id,
+            itemNo: itemId,
+          },
+        },
+      });
+
+      if (!item) {
+        throw new NotFoundException('Товар не найден в корзине');
+      }
+
+      const updatedItem = await tx.cartItem.update({
+        where: {
+          id: item.id,
         },
         data: {
-          quantity: updatedQuantity,
+          quantity,
         },
       });
-    }
 
-    await this.historyService.create(userId, HistoryAction.ADD_TO_CART, {
-      itemNo: dto.itemNo,
-      quantity: dto.quantity,
-      statusDelivery: dto.statusDelivery,
+      await tx.history.create({
+        data: {
+          userId,
+          action: HistoryAction.UPDATE_CART,
+          metadata: {
+            itemNo: itemId,
+            quantity,
+          },
+        },
+      });
+
+      return updatedItem;
     });
-    const product = await this.parser.getItemDetails(dto.itemNo);
-    return await this.prisma.cartItem.create({
-      data: {
-        cartId: cart.id,
-        itemNo: dto.itemNo,
-        title: product?.item?.description ?? '',
-        price: markupPercentPrice(product?.item?.price ?? 0),
-        imageUrl: normalizeImagePath(product?.item?.firstPic) as string,
-        quantity: dto.quantity,
-        statusDelivery: dto.statusDelivery,
-      },
-    });
+    return this.getCart(userId);
   }
 
-  async updateQuantity(userId: number, itemId: string, quantity: number) {
-    const cart = await this.getOrCreateCart(userId);
-
-    const item = await this.prisma.cartItem.findFirst({
-      where: {
-        itemNo: itemId,
-        cartId: cart.id,
-      },
-    });
-
-    if (!item) {
-      throw new NotFoundException();
-    }
-    await this.historyService.create(userId, HistoryAction.UPDATE_CART, {
-      itemNo: itemId,
-      quantity: quantity,
-    });
-    return this.prisma.cartItem.update({
-      where: {
-        id: item.id,
-      },
-      data: {
-        quantity,
-      },
-    });
-  }
-
-  async removeItem(userId: number, itemId: string) {
+  async removeItem(userId: number, itemId: string): Promise<CartResponse> {
     const cart = await this.getOrCreateCart(userId);
 
     const item = await this.prisma.cartItem.findFirst({
@@ -182,9 +274,7 @@ export class CartService {
       },
     });
 
-    return {
-      success: true,
-    };
+    return this.getCart(userId);
   }
 
   async clearCart(userId: number) {

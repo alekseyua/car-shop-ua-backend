@@ -32,7 +32,7 @@ export class ResponseParserProductDto {
   'searchDescription': string;
 
   @ApiPropertyOptional()
-  'longText': string | null;
+  'longText': string;
 
   @ApiPropertyOptional()
   'shortText': string | null;
@@ -182,7 +182,7 @@ export class ProductItem {
   @ApiProperty()
   'searchDescription': string;
   @ApiPropertyOptional()
-  'longText': string | null;
+  'longText': string;
   @ApiPropertyOptional()
   'shortText': string | null;
   @ApiProperty()
@@ -299,6 +299,8 @@ export class NormalizeProductItem {
   'retail': number;
   @ApiProperty()
   'price': number;
+  @ApiProperty()
+  'longText': string;
   @ApiProperty({
     type: [ResponseStockDto],
   })

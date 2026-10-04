@@ -24,6 +24,7 @@ import { AccessoriesService } from './accessories/accessories.service';
 import { AccessoriesModule } from './accessories/accessories.module';
 import { SearchModule } from './search/search.module';
 import { ProxyModule } from './proxy/proxy.module';
+import { GuestSessionModule } from './guest-session/guest-session.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { ProxyModule } from './proxy/proxy.module';
     AccessoriesModule,
     SearchModule,
     ProxyModule,
+    GuestSessionModule,
   ],
   controllers: [],
   providers: [AccessoriesService],

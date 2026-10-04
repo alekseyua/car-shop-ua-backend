@@ -5,7 +5,10 @@ import {
   SearchResultResponse,
 } from './dto/response-search.dto';
 import { buildPagination } from 'src/shared/common/helpers/pagination';
-import { markupPercentPrice, normalizeDoubleNumber } from 'src/shared/common/helpers/helpers';
+import {
+  markupPercentPrice,
+  normalizeDoubleNumber,
+} from 'src/shared/common/helpers/helpers';
 
 @Injectable()
 export class SearchService {

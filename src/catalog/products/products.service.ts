@@ -41,12 +41,12 @@ export class ProductsService {
           cacheProductsObj.map(async (item: ProductItem) => {
             const dataFromPriceCacheObj: productCachePriceDto | null =
               await getProductFromPrice(item.itemNo, this.redis);
-              console.log({
-                item,
-                itemStock: item.stock,
-                dataFromPriceCacheObj,
-                stock: dataFromPriceCacheObj?.stock.Stock,
-              });
+            console.log({
+              item,
+              itemStock: item.stock,
+              dataFromPriceCacheObj,
+              stock: dataFromPriceCacheObj?.stock.Stock,
+            });
             return normalizeResponseProductItem(item, dataFromPriceCacheObj);
           }),
         );

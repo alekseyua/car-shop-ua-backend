@@ -1,5 +1,4 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 
@@ -60,9 +59,7 @@ export class UsersService {
       data: {
         lastName: dto.lastName,
         firstName: dto.firstName,
-        birthDate: dto.birthDate
-          ? new Date(dto.birthDate)
-          : undefined,
+        birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
         nickname: dto.nickname,
         avatarUrl: dto.avatarUrl,
         phone: dto.phone,
@@ -99,5 +96,4 @@ export class UsersService {
       },
     });
   }
-  
 }

@@ -26,7 +26,7 @@
     *****
          connect redis from redis-cli
           redis-cli \                                                   
-            -h 74.50.65.152 \
+            -h 157.250.203.32 \
             -p 6381 \
             --user ***** \
             --pass '**********'

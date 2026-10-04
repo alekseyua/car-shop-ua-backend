@@ -17,6 +17,7 @@ import { UpdateCartQuantityDto } from './dto/update-cart.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/roles.decorator';
 import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
+import { CartResponse } from './dto/response.cart.dto';
 
 @ApiBearerAuth()
 @Controller('cart')
@@ -25,13 +26,16 @@ export class CartController {
   constructor(private readonly cartService: CartService) {}
 
   @Get()
-  getCart(@CurrentUser() user: Express.User) {
+  getCart(@CurrentUser() user: Express.User): Promise<CartResponse> {
     const userId = user.userId;
     return this.cartService.getCart(userId);
   }
 
   @Post('items')
-  addItem(@CurrentUser() user: Express.User, @Body() dto: AddToCartDto) {
+  addItem(
+    @CurrentUser() user: Express.User,
+    @Body() dto: AddToCartDto,
+  ): Promise<CartResponse> {
     return this.cartService.addItem(user.userId, dto);
   }
 
@@ -48,7 +52,10 @@ export class CartController {
   }
 
   @Delete('items/:id')
-  removeItem(@CurrentUser() user: Express.User, @Param('id') itemId: string) {
+  removeItem(
+    @CurrentUser() user: Express.User,
+    @Param('id') itemId: string,
+  ): Promise<CartResponse> {
     return this.cartService.removeItem(user.userId, itemId);
   }
 
@@ -60,5 +67,10 @@ export class CartController {
   @Post('checkout')
   checkout(@CurrentUser() user: Express.User, @Body() dto: CheckoutDto) {
     return this.cartService.createFromCart(user.userId, dto);
+  }
+
+  @Post('sync')
+  sync(@CurrentUser() user: Express.User, @Body() dto: AddToCartDto[]) {
+    return this.cartService.syncItemsCart(user.userId, dto);
   }
 }

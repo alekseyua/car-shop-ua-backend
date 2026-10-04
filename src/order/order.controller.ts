@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -16,21 +17,30 @@ import { UpdateOrderStatusDto } from './dto/update-order.dto';
 import { CurrentUser, Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'generated/prisma/enums';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Request } from 'express';
 
 @ApiBearerAuth()
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrderService) {}
-
   @Post()
   @ApiOperation({
     summary: 'Создать заказ',
     description:
-      'Создает заказ на основе элементов в корзине пользователя. В будущем планируется возможность выбора конкретных элементов для заказа.',
+      'Создает заказ на основе элементов корзины. Заказ может быть создан как авторизованным пользователем, так и гостем.',
   })
-  create(@CurrentUser() user: Express.User, @Body() dto: CreateOrderDto) {
-    return this.ordersService.create(user.userId, dto);
+  create(
+    @CurrentUser() user: Express.User | undefined,
+    @Body() dto: CreateOrderDto,
+    @Req() req: Request,
+  ) {
+    const guestSessionId: string | null =
+      typeof req.cookies?.guest_session_id === 'string'
+        ? req.cookies.guest_session_id
+        : null;
+
+    return this.ordersService.create(user?.userId ?? null, guestSessionId, dto);
   }
 
   @Get()

@@ -120,6 +120,9 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
 
     // Собираем body
     const body = options?.data;
+    console.log('URL:', url);
+    console.log('METHOD: POST');
+    console.log('BODY:', JSON.stringify(options?.data, null, 2));
 
     // Отправляем POST
     let response = await this.request.post(url, {
@@ -133,13 +136,15 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
       console.log('TOKEN EXPIRED → RELOGIN');
 
       await this.login();
-
       response = await this.request.post(url, {
-        headers: this.getAuthHeaders(),
+        ...options,
+        headers: {
+          ...this.getAuthHeaders(),
+          ...options?.headers,
+        },
         data: options?.data,
       });
     }
-
     return response;
   }
   // -----------------------------------
@@ -201,7 +206,7 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
   // -----------------------------------
   // GET ITEM DETAILS
   // -----------------------------------
-
+  i = 0;
   async getItemDetails(
     itemNo: string,
   ): Promise<ResponseProductDetailParserDto> {
@@ -209,6 +214,22 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
       data: JSON.stringify(itemNo),
       headers: {
         'Content-Type': 'application/json',
+        // Accept: 'application/json, text/plain, */*',
+        'Accept-Language': 'uk',
+        // Connection: 'keep-alive',
+        // Origin: 'https://autotechnics.ua',
+        // Pragma: 'no-cache',
+        // Referer: 'https://autotechnics.ua/',
+        // 'Cache-Control': 'no-cache',
+        // 'Sec-Fetch-Dest': 'empty',
+        // 'Sec-Fetch-Mode': 'cors',
+        // 'Sec-Fetch-Site': 'cross-site',
+        // 'User-Agent':
+        //   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36',
+        // 'sec-ch-ua':
+        //   '"Chromium";v="152", "Not?A_Brand";v="24", "Google Chrome";v="152"',
+        // 'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
       },
     });
     if (!response.ok()) {

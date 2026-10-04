@@ -14,70 +14,119 @@ export class OrderService {
    * @param dto
    * @returns
    */
-  async create(userId: number, dto: CreateOrderDto) {
+  private async createOrderFromCart(
+    cartId: number,
+    userId: number | null,
+    guestSessionId: string | null,
+    dto: CreateOrderDto,
+  ) {
+    const cart = await this.prisma.cart.findUnique({
+      where: {
+        id: cartId,
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    if (!cart || cart.items.length === 0) {
+      throw new NotFoundException('Cart is empty');
+    }
+
+    const totalPrice = cart.items.reduce(
+      (sum, item) => sum + Number(item.price) * item.quantity,
+      0,
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.create({
+        data: {
+          userId,
+          guestSessionId,
+          totalPrice,
+          orderNumber: generateOrderNumber(),
+
+          deliveryCity: dto.deliveryCity,
+          deliveryPhone: dto.deliveryPhone,
+          deliveryEmail: dto.deliveryEmail,
+          deliveryLastname: dto.deliveryLastname,
+          deliveryFirstname: dto.deliveryFirstname,
+          deliveryMiddlename: dto.deliveryMiddlename,
+          deliveryComment: dto.deliveryComment,
+          deliveryVin: dto.deliveryVin,
+          deliveryPoint: dto.deliveryPoint,
+          deliveryPointRef: dto.deliveryPointRef,
+
+          deliveryStreet: dto.deliveryStreet,
+          deliveryHouse: dto.deliveryHouse,
+          deliveryApartment: dto.deliveryApartment,
+
+          items: {
+            create: cart.items.map((item) => ({
+              itemNo: item.itemNo,
+              title: item.title,
+              quantity: item.quantity,
+              price: item.price,
+              imageUrl: item.imageUrl,
+            })),
+          },
+        },
+
+        include: {
+          items: true,
+        },
+      });
+
+      await tx.cartItem.deleteMany({
+        where: {
+          cartId,
+        },
+      });
+
+      return order;
+    });
+  }
+
+  private async createUserOrder(userId: number, dto: CreateOrderDto) {
     const cart = await this.prisma.cart.findUnique({
       where: {
         userId,
       },
     });
 
-    const cartItems = await this.prisma.cartItem.findMany({
+    if (!cart) {
+      throw new NotFoundException('Cart not found');
+    }
+
+    return this.createOrderFromCart(cart.id, userId, null, dto);
+  }
+  private async createGuestOrder(guestSessionId: string, dto: CreateOrderDto) {
+    const cart = await this.prisma.cart.findUnique({
       where: {
-        cartId: cart?.id,
+        guestSessionId,
       },
     });
-    const totalPrice = cartItems.reduce(
-      (sum, item) => sum + Number(item.price) * item.quantity,
-      0,
-    );
-    if (cartItems.length === 0) {
-      throw new NotFoundException('Cart is empty');
+
+    if (!cart) {
+      throw new NotFoundException('Cart not found');
     }
 
-    const orderNumber = generateOrderNumber();
-    const order = await this.prisma.order.create({
-      data: {
-        userId,
-        totalPrice,
-        orderNumber: orderNumber,
+    return this.createOrderFromCart(cart.id, null, guestSessionId, dto);
+  }
 
-        deliveryCity: dto.deliveryCity,
-        deliveryPhone: dto.deliveryPhone,
-        deliveryEmail: dto.deliveryEmail,
-        deliveryLastname: dto.deliveryLastname,
-        deliveryFirstname: dto.deliveryFirstname,
-        deliveryMiddlename: dto.deliveryMiddlename,
-        deliveryComment: dto.deliveryComment,
-        deliveryVin: dto.deliveryVin,
-        deliveryPoint: dto.deliveryPoint,
-        deliveryPointRef: dto.deliveryPointRef,
-
-        deliveryStreet: dto.deliveryStreet,
-        deliveryHouse: dto.deliveryHouse,
-        deliveryApartment: dto.deliveryApartment,
-
-        items: {
-          create: cartItems.map((item) => ({
-            itemNo: item.itemNo,
-            title: item.title,
-            quantity: item.quantity,
-            price: item.price,
-            imageUrl: item.imageUrl,
-          })),
-        },
-      },
-      include: {
-        items: true,
-      },
-    });
-    if (order && cart?.id) {
-      await this.prisma.cartItem.deleteMany({
-        where: {
-          cartId: cart.id,
-        },
-      });
+  async create(
+    userId: number | null,
+    guestSessionId: string | null,
+    dto: CreateOrderDto,
+  ) {
+    console.log({ userId, guestSessionId });
+    if (!userId && guestSessionId) {
+      return this.createGuestOrder(guestSessionId, dto);
     }
-    return order;
+
+    if (userId && !guestSessionId) {
+      return this.createUserOrder(userId, dto);
+    }
   }
 
   async findAll(userId: number) {

@@ -131,6 +131,11 @@ export const normalizeImagePath = (img: string | []): string | string[] =>
     ? img.map((i: string) => i.replace('tcd/', 'tcd-pic/'))
     : img.replace('tcd/', 'tcd-pic/');
 
+export const normalizeLongText = (html: string): string => {
+  if (!html) return '';
+  return html.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)?.[1] ?? '';
+};
+
 export const weakCache = <K extends object, V>() => {
   const cache = new WeakMap<K, V>();
   return {
@@ -167,6 +172,7 @@ export const normalizeResponseProductItem = (
     description: item.description,
     searchDescription: item.searchDescription,
     inStock: item.inStock,
+    longText: normalizeLongText(item.longText),
     firstPic: normalizeImagePath(item.firstPic) as string,
     retail: item.retail,
     salesOrderMultiple: item.salesOrderMultiple,

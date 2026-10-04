@@ -72,3 +72,57 @@ export class CreateOrderDto {
   //   @Type(() => CreateOrderItemDto)
   //   'items': CreateOrderItemDto[];
 }
+export class CreateGuestOrderDto {
+  @IsString()
+  'deliveryCity': string;
+
+  @IsString()
+  'deliveryPhone': string;
+
+  @IsOptional()
+  @IsString()
+  'deliveryEmail': string;
+
+  @IsString()
+  'deliveryLastname': string;
+
+  @IsOptional()
+  @IsString()
+  'deliveryFirstname': string;
+
+  @IsOptional()
+  @IsString()
+  'deliveryMiddlename': string;
+
+  @IsOptional()
+  @IsString()
+  'deliveryComment': string;
+
+  @IsOptional()
+  @IsString()
+  'deliveryVin': string;
+
+  @IsOptional()
+  @IsString()
+  'deliveryPoint': string;
+
+  @IsOptional()
+  @IsString()
+  'deliveryPointRef': string;
+
+  @IsOptional()
+  @IsString()
+  'deliveryStreet': string;
+
+  @IsString()
+  'deliveryHouse': string;
+
+  @IsOptional()
+  @IsString()
+  'deliveryApartment'?: string;
+
+  //   @IsArray()
+  //   @ValidateNested({ each: true })
+  //   @Type(() => CreateOrderItemDto)
+  //   'items': CreateOrderItemDto[];
+}
