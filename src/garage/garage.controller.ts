@@ -1,20 +1,24 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
+
+import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+
 import { GarageService } from './garage.service';
 import { CreateGarageDto } from './dto/create-garage.dto';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { UpdateGarageDto } from './dto/update-garage.dto';
+import { GarageResponseDto } from './dto/response-garage.dto';
+
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/roles.decorator';
-import { GarageResponseDto } from './dto/response-garage.dto';
-import { UpdateGarageDto } from './dto/update-garage.dto';
 
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -24,7 +28,7 @@ export class GarageController {
 
   @ApiOperation({
     summary: 'Create new garage',
-    description: 'return create garage',
+    description: 'Create garage for current user',
   })
   @ApiOkResponse({
     type: GarageResponseDto,
@@ -32,17 +36,18 @@ export class GarageController {
   @Post()
   create(
     @CurrentUser() user: Express.User,
-    @Body() createGarageDto: CreateGarageDto,
+    @Body() dto: CreateGarageDto,
   ): Promise<GarageResponseDto> {
-    return this.garageService.create(user.userId, createGarageDto);
+    return this.garageService.create(user.userId, dto);
   }
 
   @ApiOperation({
     summary: 'Get all garages',
-    description: "Return the current user's garages.",
+    description: "Return the current user's garages",
   })
   @ApiOkResponse({
     type: GarageResponseDto,
+    isArray: true,
   })
   @Get()
   findAll(@CurrentUser() user: Express.User): Promise<GarageResponseDto[]> {
@@ -50,39 +55,36 @@ export class GarageController {
   }
 
   @ApiOperation({
-    summary: 'Delete item garage',
-  })
-  @ApiOkResponse({
-    type: GarageResponseDto,
+    summary: 'Delete garage',
   })
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: Express.User) {
-    return this.garageService.remove(+id, user.userId);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: Express.User,
+  ) {
+    return this.garageService.remove(id, user.userId);
   }
 
   @ApiOperation({
-    summary: 'Update item garage',
-  })
-  @ApiOkResponse({
-    type: GarageResponseDto,
+    summary: 'Update garage',
   })
   @Put(':id')
   edit(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateGarageDto,
     @CurrentUser() user: Express.User,
-  ) {
-    return this.garageService.edit(+id, user.userId, dto);
+  ): Promise<GarageResponseDto> {
+    return this.garageService.edit(id, user.userId, dto);
   }
 
   @ApiOperation({
     summary: 'Set default garage',
   })
-  @ApiOkResponse({
-    type: GarageResponseDto,
-  })
   @Put(':id/default')
-  setDefaultGarage(@Param('id') id: string, @CurrentUser() user: Express.User) {
-    return this.garageService.setDefaultGarage(+id, user.userId);
+  setDefaultGarage(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: Express.User,
+  ): Promise<GarageResponseDto> {
+    return this.garageService.setDefaultGarage(id, user.userId);
   }
 }

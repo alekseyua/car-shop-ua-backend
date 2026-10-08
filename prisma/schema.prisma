@@ -191,6 +191,7 @@ model GuestSession {
 
   cart         Cart?
   orders       Order[]
+  favorites    Favorite[]
 }
 
 model Address {
@@ -216,14 +217,19 @@ model Address {
 model Favorite {
   id        Int @id @default(autoincrement())
 
-  userId    Int
-  user      User @relation(fields: [userId], references: [id])
+  userId    Int?
+  guestSessionId String?
+  user      User? @relation(fields: [userId], references: [id])
+  guestSession   GuestSession? @relation(fields: [guestSessionId], references: [id])
 
   createdAt DateTime @default(now())
 
   itemNo String
 
   @@unique([userId, itemNo])
+  @@unique([guestSessionId, itemNo])
+  @@index([guestSessionId])
+  @@index([userId])
 }
 
 enum OrderStatus {
@@ -350,7 +356,7 @@ model History {
 model Cart {
   id Int @id @default(autoincrement())
 
-  userId Int @unique
+  userId Int? @unique
   guestSessionId String?       @unique
   user User? @relation(fields: [userId], references: [id])
   guestSession   GuestSession? @relation(fields: [guestSessionId], references: [id])

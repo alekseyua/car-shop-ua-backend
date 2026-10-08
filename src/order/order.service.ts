@@ -115,39 +115,58 @@ export class OrderService {
   }
 
   async create(
-    userId: number | null,
-    guestSessionId: string | null,
+    userId: number | undefined,
+    guestSessionId: string | undefined,
     dto: CreateOrderDto,
   ) {
-    console.log({ userId, guestSessionId });
-    if (!userId && guestSessionId) {
+    if (userId) {
+      return this.createUserOrder(userId, dto);
+    }
+
+    if (guestSessionId) {
       return this.createGuestOrder(guestSessionId, dto);
     }
 
-    if (userId && !guestSessionId) {
-      return this.createUserOrder(userId, dto);
+    throw new NotFoundException('User or guest session is required');
+  }
+
+  async findAllOrders(userId?: number, guestSessionId?: string) {
+    if (userId) {
+      return this.prisma.order.findMany({
+        where: {
+          userId,
+        },
+        include: {
+          items: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
     }
+
+    if (guestSessionId) {
+      return this.prisma.order.findMany({
+        where: {
+          guestSessionId,
+        },
+        include: {
+          items: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    }
+
+    return [];
   }
 
-  async findAll(userId: number) {
-    return this.prisma.order.findMany({
-      where: {
-        userId,
-      },
-      include: {
-        items: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
-
-  async findOne(id: number, userId: number) {
+  async findOne(id: number, userId?: number, guestSessionId?: string) {
     const order = await this.prisma.order.findFirst({
       where: {
         id,
-        userId,
+        ...(userId ? { userId } : { guestSessionId }),
       },
       include: {
         items: true,
@@ -161,7 +180,7 @@ export class OrderService {
     return order;
   }
 
-  async updateStatus(orderId: number, status: OrderStatus) {
+  async updateStatus(orderId: number, status: OrderStatus, userId: number) {
     return this.prisma.order.update({
       where: {
         id: orderId,

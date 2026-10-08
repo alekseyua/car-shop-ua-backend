@@ -1,59 +1,84 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, ParseIntPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+
 import { AddressService } from './address.service';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { CurrentUser } from 'src/auth/decorators/roles.decorator';
 
 @Controller('address')
+@UseGuards(JwtAuthGuard)
 export class AddressController {
-  constructor(private readonly addressService: AddressService) { }
+  constructor(private readonly addressService: AddressService) {}
 
-  @UseGuards(JwtAuthGuard)
+  /**
+   * Создать адрес пользователя.
+   */
   @Post()
-  create(
-    @Req() req,
-    @Body() dto: CreateAddressDto,
-  ) {
-    return this.addressService.create(
-      req.user.userId,
-      dto,
-    );
+  create(@CurrentUser() user: Express.User, @Body() dto: CreateAddressDto) {
+    return this.addressService.create(user.userId, dto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  /**
+   * Получить все адреса пользователя.
+   */
   @Get()
-  findAll(@Req() req) {
-    return this.addressService.findAll(
-      req.user.userId,
-    );
+  findAll(@CurrentUser() user: Express.User) {
+    return this.addressService.findAll(user.userId);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id/default')
-  setDefault(
-    @Req() req,
+  /**
+   * Получить конкретный адрес.
+   */
+  @Get(':id')
+  findOne(
+    @CurrentUser() user: Express.User,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    return this.addressService.setDefault(
-      req.user.userId,
-      id,
-    );
+    return this.addressService.findOne(user.userId, id);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.addressService.findOne(+id);
+  /**
+   * Сделать адрес основным.
+   */
+  @Patch(':id/default')
+  setDefault(
+    @CurrentUser() user: Express.User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.addressService.setDefault(user.userId, id);
   }
 
+  /**
+   * Обновить адрес.
+   */
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAddressDto: UpdateAddressDto) {
-    return this.addressService.update(+id, updateAddressDto);
+  update(
+    @CurrentUser() user: Express.User,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAddressDto,
+  ) {
+    return this.addressService.update(user.userId, id, dto);
   }
 
+  /**
+   * Удалить адрес.
+   */
   @Delete(':id')
-  remove(@Param() { 
-    userId,
-    addressId }: { userId: number, addressId: number }) {
-    return this.addressService.remove(userId, addressId);
+  remove(
+    @CurrentUser() user: Express.User,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.addressService.remove(user.userId, id);
   }
 }

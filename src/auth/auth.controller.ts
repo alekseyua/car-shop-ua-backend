@@ -1,8 +1,9 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/registration-auth.dto';
 import { LoginDto } from './dto/login-auth.dto';
 import { ApiOkResponse } from '@nestjs/swagger';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -19,8 +20,19 @@ export class AuthController {
       },
     },
   })
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.register(dto);
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/auth',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    return result;
   }
 
   @Post('login')
@@ -41,13 +53,24 @@ export class AuthController {
             nickname: { type: 'string' },
             phone: { type: 'string' },
             avatarUrl: { type: 'string' },
-          },  
-        }
+          },
+        },
       },
     },
   })
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.login(dto);
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/auth',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    return result;
   }
 
   @Post('refresh')
@@ -61,8 +84,7 @@ export class AuthController {
       },
     },
   })
-  refresh(
-    @Body('refreshToken') refreshToken: string) {
+  refresh(@Body('refreshToken') refreshToken: string) {
     return this.authService.refresh(refreshToken);
   }
 
@@ -70,7 +92,16 @@ export class AuthController {
   @ApiOkResponse({
     description: 'User successfully logged out',
   })
-  logout(@Body('userId') userId: number) {
+  logout(
+    @Body('userId') userId: number,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/auth',
+    });
     return this.authService.logout(userId);
   }
 }

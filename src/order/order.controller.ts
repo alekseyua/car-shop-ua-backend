@@ -2,12 +2,10 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   Param,
   ParseIntPipe,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -17,9 +15,8 @@ import { UpdateOrderStatusDto } from './dto/update-order.dto';
 import { CurrentUser, Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'generated/prisma/enums';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { Request } from 'express';
+import { GuestSession } from 'src/guest-session/decorators/guestSession';
 
-@ApiBearerAuth()
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
 export class OrdersController {
@@ -33,14 +30,9 @@ export class OrdersController {
   create(
     @CurrentUser() user: Express.User | undefined,
     @Body() dto: CreateOrderDto,
-    @Req() req: Request,
+    @GuestSession() guestSessionId: string | undefined,
   ) {
-    const guestSessionId: string | null =
-      typeof req.cookies?.guest_session_id === 'string'
-        ? req.cookies.guest_session_id
-        : null;
-
-    return this.ordersService.create(user?.userId ?? null, guestSessionId, dto);
+    return this.ordersService.create(user?.userId, guestSessionId, dto);
   }
 
   @Get()
@@ -48,8 +40,11 @@ export class OrdersController {
     summary: 'Получить список заказов пользователя',
     description: 'Возвращает все заказы, связанные с текущим пользователем',
   })
-  findAll(@CurrentUser() user: Express.User) {
-    return this.ordersService.findAll(user.userId);
+  findAll(
+    @CurrentUser() user: Express.User,
+    @GuestSession() guestSessionId: string | undefined,
+  ) {
+    return this.ordersService.findAllOrders(user?.userId, guestSessionId);
   }
 
   @Get(':id')
@@ -60,10 +55,12 @@ export class OrdersController {
   findOne(
     @CurrentUser() user: Express.User,
     @Param('id', ParseIntPipe) id: number,
+    @GuestSession() guestSessionId: string | undefined,
   ) {
-    return this.ordersService.findOne(id, user.userId);
+    return this.ordersService.findOne(id, user?.userId, guestSessionId);
   }
 
+  @ApiBearerAuth()
   @Patch(':id/status')
   @ApiOperation({
     summary: 'Обновить статус заказа',
@@ -75,36 +72,6 @@ export class OrdersController {
     @Body() dto: UpdateOrderStatusDto,
     @CurrentUser() user: Express.User,
   ) {
-    return this.ordersService.updateStatus(id, dto.status);
+    return this.ordersService.updateStatus(id, dto.status, user.userId);
   }
-
-  // @Post('webhook')
-  // async stripeWebhook(
-  //   @Req() req: RawBodyRequest<Request>,
-  //   @Headers('stripe-signature') sig: string,
-  // ) {
-  //   const event =
-  //     this.stripeService.constructEvent(
-  //       req.rawBody,
-  //       sig,
-  //     );
-
-  //   if (
-  //     event.type ===
-  //     'checkout.session.completed'
-  //   ) {
-  //     const session = event.data.object;
-
-  //     const orderId = Number(
-  //       session.metadata.orderId,
-  //     );
-
-  //     await this.ordersService.updateStatus(
-  //       orderId,
-  //       OrderStatus.PAID,
-  //     );
-  //   }
-
-  //   return { received: true };
-  // }
 }

@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from 'src/core/prisma/prisma.service';
@@ -10,11 +14,9 @@ import { generateNickname } from 'src/shared/common/helpers/helpers';
 
 @Injectable()
 export class AuthService {
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-
   ) {}
 
   async register(dto: RegisterDto) {
@@ -34,26 +36,18 @@ export class AuthService {
       data: {
         lastName: dto.lastName,
         firstName: dto.firstName,
-        birthDate: dto.birthDate
-          ? new Date(dto.birthDate)
-          : null,
+        birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
 
-        nickname: dto?.nickname ?? await generateNickname(),
+        nickname: dto?.nickname ?? (await generateNickname()),
         email: dto.email,
         phone: dto.phone,
 
         passwordHash,
       },
     });
-    const tokens = await this.generateTokens(
-      user.id,
-      user.email,
-    );
+    const tokens = await this.generateTokens(user.id, user.email);
 
-    const hash = await bcrypt.hash(
-      tokens.refreshToken,
-      10,
-    );
+    const hash = await bcrypt.hash(tokens.refreshToken, 10);
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -63,7 +57,6 @@ export class AuthService {
     });
 
     return tokens;
-
   }
 
   async login(dto: LoginDto) {
@@ -77,19 +70,13 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    const isMatch = await bcrypt.compare(
-      dto.password,
-      user.passwordHash,
-    );
+    const isMatch = await bcrypt.compare(dto.password, user.passwordHash);
 
     if (!isMatch) {
       throw new UnauthorizedException('Invalid password');
     }
     const tokens = await this.generateTokens(user.id, user.email);
-    const hash = await bcrypt.hash(
-      tokens.refreshToken,
-      10,
-    );
+    const hash = await bcrypt.hash(tokens.refreshToken, 10);
 
     await this.prisma.user.update({
       where: {
@@ -100,28 +87,28 @@ export class AuthService {
       },
     });
 
-    return {...tokens, user: {
-      id: user.id,
-      email: user.email,
-      nickname: user.nickname,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone,
-      avatarUrl: user.avatarUrl,
-    }};
+    return {
+      ...tokens,
+      user: {
+        id: user.id,
+        email: user.email,
+        nickname: user.nickname,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        avatarUrl: user.avatarUrl,
+      },
+    };
   }
 
   async refresh(refreshToken: string) {
     try {
-      const payload = await this.jwtService.verifyAsync(
-        refreshToken,
-        {
-          secret: process.env.JWT_REFRESH_SECRET,
-        },
-      );
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
 
       const user = await this.prisma.user.findUnique({
-      where: {
+        where: {
           id: payload.sub,
         },
       });
@@ -129,18 +116,12 @@ export class AuthService {
       if (!user?.refreshTokenHash) {
         throw new UnauthorizedException('Invalid refresh token');
       }
-      const isMatch = await bcrypt.compare(
-        refreshToken,
-        user.refreshTokenHash,
-      );
+      const isMatch = await bcrypt.compare(refreshToken, user.refreshTokenHash);
       if (!isMatch) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      return this.generateTokens(
-        user.id,
-        user.email,
-      );
+      return this.generateTokens(user.id, user.email);
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -156,7 +137,7 @@ export class AuthService {
       },
     });
   }
-  
+
   private async generateTokens(id: number, email: string) {
     const payload = {
       sub: id,

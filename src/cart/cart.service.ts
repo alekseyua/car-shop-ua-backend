@@ -3,8 +3,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { AddToCartDto } from './dto/add-cart.dto';
+
 import {
   generateOrderNumber,
   getProductFromPrice,
@@ -12,6 +14,7 @@ import {
   normalizeDoubleNumber,
   normalizeImagePath,
 } from 'src/shared/common/helpers/helpers';
+
 import { CheckoutDto } from './dto/query-cart.dto';
 import { HistoryAction } from 'generated/prisma/browser';
 import { HistoryService } from 'src/history/history.service';
@@ -28,25 +31,60 @@ export class CartService {
     private readonly redis: IoredisService,
   ) {}
 
-  private async getOrCreateCart(userId: number) {
-    let cart = await this.prisma.cart.findUnique({
-      where: {
-        userId,
-      },
-    });
-
-    if (!cart) {
-      cart = await this.prisma.cart.create({
-        data: {
+  /**
+   * Возвращает корзину пользователя или гостя.
+   *
+   * userId имеет приоритет над guestSessionId.
+   */
+  private async getOrCreateCart(userId?: number, guestSessionId?: string) {
+    if (userId) {
+      let cart = await this.prisma.cart.findUnique({
+        where: {
           userId,
         },
       });
+
+      if (!cart) {
+        cart = await this.prisma.cart.create({
+          data: {
+            userId,
+          },
+        });
+      }
+
+      return cart;
     }
-    return cart;
+
+    if (guestSessionId) {
+      let cart = await this.prisma.cart.findUnique({
+        where: {
+          guestSessionId,
+        },
+      });
+
+      if (!cart) {
+        cart = await this.prisma.cart.create({
+          data: {
+            guestSessionId,
+          },
+        });
+      }
+
+      return cart;
+    }
+
+    throw new BadRequestException('User or guest session is required');
   }
 
-  async getCart(userId: number): Promise<CartResponse> {
-    const cart = await this.getOrCreateCart(userId);
+  /**
+   * Получить корзину.
+   */
+  async getCart(
+    userId?: number,
+    guestSessionId?: string,
+  ): Promise<CartResponse> {
+    const cart = await this.getOrCreateCart(userId, guestSessionId);
+
     const result = await this.prisma.cart.findUnique({
       where: {
         id: cart.id,
@@ -55,8 +93,13 @@ export class CartService {
         items: true,
       },
     });
+
+    if (!result) {
+      throw new NotFoundException('Cart not found');
+    }
+
     const products = await Promise.all(
-      result!.items.map(async (item) => {
+      result.items.map(async (item) => {
         const priceFromCache = await getProductFromPrice(
           item.itemNo,
           this.redis,
@@ -73,28 +116,35 @@ export class CartService {
         };
       }),
     );
-    // console.log(products);
-    // console.log(result?.items);
+
     const total = products.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0,
     );
+
     return {
       ...result,
-      id: result!.id,
+      id: result.id,
       items: products.toSorted((a, b) => a.id - b.id),
       total,
     };
   }
 
+  /**
+   * Синхронизация корзины.
+   *
+   * Работает и для user, и для guest.
+   */
   async syncItemsCart(
-    userId: number,
+    userId: number | undefined,
+    guestSessionId: string | undefined,
     dto: AddToCartDto[],
   ): Promise<CartResponse> {
-    const cart = await this.getOrCreateCart(userId);
+    const cart = await this.getOrCreateCart(userId, guestSessionId);
 
     for (const item of dto) {
       const product = await this.parser.getItemDetails(item.itemNo);
+
       await this.prisma.cartItem.upsert({
         where: {
           cartId_itemNo: {
@@ -103,7 +153,6 @@ export class CartService {
           },
         },
 
-        // Товар уже существует
         update: {
           quantity: {
             increment: item.quantity,
@@ -111,7 +160,6 @@ export class CartService {
           statusDelivery: item.statusDelivery,
         },
 
-        // Товара ещё нет
         create: {
           cartId: cart.id,
           itemNo: item.itemNo,
@@ -123,18 +171,32 @@ export class CartService {
         },
       });
 
-      // История
-      await this.historyService.create(userId, HistoryAction.SYNC_CART, {
-        itemNo: item.itemNo,
-        quantity: item.quantity,
-        statusDelivery: item.statusDelivery,
-      });
+      /**
+       * History сейчас привязан к userId.
+       *
+       * Поэтому для guest history не создаём.
+       */
+      if (userId) {
+        await this.historyService.create(userId, HistoryAction.SYNC_CART, {
+          itemNo: item.itemNo,
+          quantity: item.quantity,
+          statusDelivery: item.statusDelivery,
+        });
+      }
     }
-    return await this.getCart(userId);
+
+    return this.getCart(userId, guestSessionId);
   }
 
-  async addItem(userId: number, dto: AddToCartDto) {
-    const cart = await this.getOrCreateCart(userId);
+  /**
+   * Добавить товар.
+   */
+  async addItem(
+    userId: number | undefined,
+    guestSessionId: string | undefined,
+    dto: AddToCartDto,
+  ): Promise<CartResponse> {
+    const cart = await this.getOrCreateCart(userId, guestSessionId);
 
     const product = await this.parser.getItemDetails(dto.itemNo);
 
@@ -151,7 +213,7 @@ export class CartService {
         },
       });
 
-      const cartItem = await tx.cartItem.upsert({
+      await tx.cartItem.upsert({
         where: {
           cartId_itemNo: {
             cartId: cart.id,
@@ -177,42 +239,46 @@ export class CartService {
         },
       });
 
-      if (existing) {
+      /**
+       * История только для авторизованного пользователя.
+       */
+      if (userId) {
         await tx.history.create({
           data: {
             userId,
-            action: HistoryAction.UPDATE_CART,
+            action: existing
+              ? HistoryAction.UPDATE_CART
+              : HistoryAction.ADD_TO_CART,
             metadata: {
               itemNo: dto.itemNo,
-              quantity: existing.quantity + dto.quantity,
-              statusDelivery: dto.statusDelivery,
-            },
-          },
-        });
-      } else {
-        await tx.history.create({
-          data: {
-            userId,
-            action: HistoryAction.ADD_TO_CART,
-            metadata: {
-              itemNo: dto.itemNo,
-              quantity: dto.quantity,
+              quantity: existing
+                ? existing.quantity + dto.quantity
+                : dto.quantity,
               statusDelivery: dto.statusDelivery,
             },
           },
         });
       }
     });
-    return this.getCart(userId);
+
+    return this.getCart(userId, guestSessionId);
   }
 
+  /**
+   * Изменить количество товара.
+   */
   async updateQuantity(
-    userId: number,
+    userId: number | undefined,
+    guestSessionId: string | undefined,
     itemId: string,
     quantity: number,
   ): Promise<CartResponse> {
-    const cart = await this.getOrCreateCart(userId);
-console.log({quantity})
+    if (quantity <= 0) {
+      throw new BadRequestException('Quantity must be greater than 0');
+    }
+
+    const cart = await this.getOrCreateCart(userId, guestSessionId);
+
     await this.prisma.$transaction(async (tx) => {
       const item = await tx.cartItem.findUnique({
         where: {
@@ -227,7 +293,7 @@ console.log({quantity})
         throw new NotFoundException('Товар не найден в корзине');
       }
 
-      const updatedItem = await tx.cartItem.update({
+      await tx.cartItem.update({
         where: {
           id: item.id,
         },
@@ -236,24 +302,32 @@ console.log({quantity})
         },
       });
 
-      await tx.history.create({
-        data: {
-          userId,
-          action: HistoryAction.UPDATE_CART,
-          metadata: {
-            itemNo: itemId,
-            quantity,
+      if (userId) {
+        await tx.history.create({
+          data: {
+            userId,
+            action: HistoryAction.UPDATE_CART,
+            metadata: {
+              itemNo: itemId,
+              quantity,
+            },
           },
-        },
-      });
-
-      return updatedItem;
+        });
+      }
     });
-    return this.getCart(userId);
+
+    return this.getCart(userId, guestSessionId);
   }
 
-  async removeItem(userId: number, itemId: string): Promise<CartResponse> {
-    const cart = await this.getOrCreateCart(userId);
+  /**
+   * Удалить товар.
+   */
+  async removeItem(
+    userId: number | undefined,
+    guestSessionId: string | undefined,
+    itemId: string,
+  ): Promise<CartResponse> {
+    const cart = await this.getOrCreateCart(userId, guestSessionId);
 
     const item = await this.prisma.cartItem.findFirst({
       where: {
@@ -263,58 +337,85 @@ console.log({quantity})
     });
 
     if (!item) {
-      throw new NotFoundException();
+      throw new NotFoundException('Товар не найден в корзине');
     }
-    await this.historyService.create(userId, HistoryAction.REMOVE_FROM_CART, {
-      itemNo: itemId,
-    });
+
+    if (userId) {
+      await this.historyService.create(userId, HistoryAction.REMOVE_FROM_CART, {
+        itemNo: itemId,
+      });
+    }
+
     await this.prisma.cartItem.delete({
       where: {
         id: item.id,
       },
     });
 
-    return this.getCart(userId);
+    return this.getCart(userId, guestSessionId);
   }
 
-  async clearCart(userId: number) {
-    const cart = await this.getOrCreateCart(userId);
+  /**
+   * Очистить корзину.
+   */
+  async clearCart(userId?: number, guestSessionId?: string) {
+    const cart = await this.getOrCreateCart(userId, guestSessionId);
 
     await this.prisma.cartItem.deleteMany({
       where: {
         cartId: cart.id,
       },
     });
-    await this.historyService.create(userId, HistoryAction.CLEAR_CART);
+
+    if (userId) {
+      await this.historyService.create(userId, HistoryAction.CLEAR_CART);
+    }
+
     return {
       success: true,
     };
   }
 
-  async createFromCart(userId: number, dto: CheckoutDto) {
+  /**
+   * Создать заказ из корзины.
+   *
+   * Поддерживает:
+   *   userId
+   *   guestSessionId
+   */
+  async createFromCart(
+    userId: number | undefined,
+    guestSessionId: string | undefined,
+    dto: CheckoutDto,
+  ) {
+    const cart = await this.getOrCreateCart(userId, guestSessionId);
+
     return this.prisma.$transaction(async (tx) => {
-      const cart = await tx.cart.findUnique({
+      const currentCart = await tx.cart.findUnique({
         where: {
-          userId,
+          id: cart.id,
         },
         include: {
           items: true,
         },
       });
 
-      if (!cart || cart.items.length === 0) {
+      if (!currentCart || currentCart.items.length === 0) {
         throw new BadRequestException('Cart is empty');
       }
 
-      const totalPrice = cart.items.reduce(
+      const totalPrice = currentCart.items.reduce(
         (sum, item) => sum + Number(item.price) * item.quantity,
         0,
       );
 
       const order = await tx.order.create({
         data: {
-          userId,
+          userId: userId ?? null,
+          guestSessionId: userId ? null : (guestSessionId ?? null),
+
           orderNumber: generateOrderNumber(),
+
           totalPrice,
 
           deliveryCity: dto.deliveryCity,
@@ -333,7 +434,7 @@ console.log({quantity})
           deliveryApartment: dto.deliveryApartment,
 
           items: {
-            create: cart.items.map((item) => ({
+            create: currentCart.items.map((item) => ({
               itemNo: item.itemNo,
               title: item.title,
               quantity: item.quantity,
@@ -342,19 +443,134 @@ console.log({quantity})
             })),
           },
         },
+
         include: {
           items: true,
         },
       });
-      await this.historyService.create(userId, HistoryAction.CREATE_ORDER);
+
+      /**
+       * History только для авторизованного.
+       */
+      if (userId) {
+        await tx.history.create({
+          data: {
+            userId,
+            action: HistoryAction.CREATE_ORDER,
+          },
+        });
+      }
 
       await tx.cartItem.deleteMany({
         where: {
-          cartId: cart.id,
+          cartId: currentCart.id,
         },
       });
 
       return order;
     });
+  }
+
+  async mergeGuestCart(
+    userId: number | undefined,
+    guestSessionId: string | undefined,
+  ): Promise<CartResponse> {
+    if (!userId) {
+      throw new BadRequestException('Authorization is required');
+    }
+
+    if (!guestSessionId) {
+      return this.getCart(userId);
+    }
+
+    const guestCart = await this.prisma.cart.findUnique({
+      where: {
+        guestSessionId,
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    /**
+     * У гостя нет корзины.
+     * Просто возвращаем пользовательскую.
+     */
+    if (!guestCart || guestCart.items.length === 0) {
+      return this.getCart(userId);
+    }
+
+    const userCart = await this.getOrCreateCart(userId);
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const guestItem of guestCart.items) {
+        const existingItem = await tx.cartItem.findUnique({
+          where: {
+            cartId_itemNo: {
+              cartId: userCart.id,
+              itemNo: guestItem.itemNo,
+            },
+          },
+        });
+
+        if (existingItem) {
+          /**
+           * Товар уже есть у пользователя.
+           * Складываем количество.
+           */
+          await tx.cartItem.update({
+            where: {
+              id: existingItem.id,
+            },
+            data: {
+              quantity: existingItem.quantity + guestItem.quantity,
+
+              /**
+               * Берём актуальные данные
+               * гостевого товара.
+               */
+              statusDelivery: guestItem.statusDelivery,
+            },
+          });
+        } else {
+          /**
+           * Товара нет в user cart.
+           * Переносим его.
+           */
+          await tx.cartItem.create({
+            data: {
+              cartId: userCart.id,
+              itemNo: guestItem.itemNo,
+              title: guestItem.title,
+              price: guestItem.price,
+              imageUrl: guestItem.imageUrl,
+              quantity: guestItem.quantity,
+              statusDelivery: guestItem.statusDelivery,
+            },
+          });
+        }
+      }
+
+      /**
+       * После успешного merge
+       * удаляем guest items.
+       */
+      await tx.cartItem.deleteMany({
+        where: {
+          cartId: guestCart.id,
+        },
+      });
+
+      /**
+       * Саму guest cart тоже можно удалить.
+       */
+      await tx.cart.delete({
+        where: {
+          id: guestCart.id,
+        },
+      });
+    });
+
+    return this.getCart(userId);
   }
 }

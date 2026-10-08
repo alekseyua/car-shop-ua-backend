@@ -5,65 +5,93 @@ import {
   Get,
   Param,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 
-import { Request } from 'express';
-
 import { FavoriteService } from './favorite.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateFavoriteDto } from './dto/create-favorite.dto';
 import { CurrentUser } from 'src/auth/decorators/roles.decorator';
+import { GuestSession } from 'src/guest-session/decorators/guestSession';
+import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt-auth.guard';
 
 @Controller('favorites')
-@UseGuards(JwtAuthGuard)
+@UseGuards(OptionalJwtAuthGuard)
 export class FavoriteController {
-  constructor(
-    private readonly favoriteService: FavoriteService,
-  ) { }
+  constructor(private readonly favoriteService: FavoriteService) {}
 
+  /**
+   * Получить избранное.
+   *
+   * Авторизованный:
+   *   userId
+   *
+   * Гость:
+   *   guestSessionId
+   */
   @Get()
   findAll(
-        @CurrentUser() user: Express.User,
+    @CurrentUser() user: Express.User | undefined,
+    @GuestSession() guestSessionId: string | undefined,
   ) {
-    return this.favoriteService.findAll(
-      user.userId,
-    );
+    return this.favoriteService.findAll(user?.userId, guestSessionId);
   }
 
+  /**
+   * Добавить товар в избранное.
+   */
   @Post()
   create(
-    @CurrentUser() user: Express.User,
+    @CurrentUser() user: Express.User | undefined,
+    @GuestSession() guestSessionId: string | undefined,
     @Body() dto: CreateFavoriteDto,
   ) {
     return this.favoriteService.create(
-      user.userId,
+      user?.userId,
+      guestSessionId,
       dto.itemNo,
     );
   }
 
+  /**
+   * Удалить товар из избранного.
+   */
   @Delete(':itemNo')
   remove(
-    @CurrentUser() user: Express.User,
-    @Param('itemNo')
-    itemNo: string,
+    @CurrentUser() user: Express.User | undefined,
+    @GuestSession() guestSessionId: string | undefined,
+    @Param('itemNo') itemNo: string,
   ) {
-    return this.favoriteService.remove(
-      user.userId,
+    return this.favoriteService.remove(user?.userId, guestSessionId, itemNo);
+  }
+
+  /**
+   * Проверить, находится ли товар в избранном.
+   */
+  @Get('check/:itemNo')
+  isFavorite(
+    @CurrentUser() user: Express.User | undefined,
+    @GuestSession() guestSessionId: string | undefined,
+    @Param('itemNo') itemNo: string,
+  ) {
+    return this.favoriteService.isFavorite(
+      user?.userId,
+      guestSessionId,
       itemNo,
     );
   }
 
-  @Get('check/:itemNo')
-  isFavorite(
-    @CurrentUser() user: Express.User,
-    @Param('itemNo')
-    itemNo: string,
+  /**
+   * Перенести guest favorites
+   * в favorites авторизованного пользователя.
+   */
+  @Post('merge')
+  merge(
+    @CurrentUser() user: Express.User | undefined,
+    @GuestSession() guestSessionId: string | undefined,
   ) {
-    return this.favoriteService.isFavorite(
-      user.userId,
-      itemNo,
+    return this.favoriteService.mergeGuestFavorites(
+      user?.userId,
+      guestSessionId,
     );
   }
 }
