@@ -32,6 +32,6 @@ export class CatalogController {
   findAll(
     @Query() dto: QueryCatalogDto,
   ): Promise<PaginationResponse<ResponseCatalogCarDto>> {
-    return this.CategoryService.findAll(dto);
+    return this.CategoryService.getCategoriesByCar(dto);
   }
 }

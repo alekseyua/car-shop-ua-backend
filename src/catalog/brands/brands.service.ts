@@ -12,7 +12,7 @@ import { PaginationResponse } from 'src/shared/common/pagination/dto/paginated-r
 export class BrandsService {
   constructor (
     private prisma: PrismaService,
-    private config: ConfigService
+    private config: ConfigService,
   ){}
 
   async findAll(dto: PaginationDto): Promise<PaginationResponse<ResponseCarBrandDto>> {

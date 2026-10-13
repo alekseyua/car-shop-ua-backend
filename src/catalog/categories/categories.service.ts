@@ -14,7 +14,7 @@ export class CategoryService {
     private parser: ParserService,
   ) {}
 
-  async create(
+  async saveDataParserInDb(
     dto: ResponseCatalogCarDto[],
     idAutotechnicsModification: number,
   ) {
@@ -36,7 +36,7 @@ export class CategoryService {
     return 'This action adds a new catalog';
   }
 
-  async findAll(
+  async getCategoriesByCar(
     dto: QueryCatalogDto,
   ): Promise<PaginationResponse<ResponseCatalogCarDto>> {
     const { typeAutotechId, page, limit } = dto;
@@ -57,7 +57,7 @@ export class CategoryService {
       // не сделано и не продумана логика по обновлению данных
       const fromParser: ResponseCatalogCarDto[] =
         await this.parser.getCatalog(typeAutotechId);
-      await this.create(fromParser, typeAutotechId);
+      await this.saveDataParserInDb(fromParser, typeAutotechId);
       return createRequestPagination(
         fromParser,
         page,
@@ -65,6 +65,7 @@ export class CategoryService {
         fromParser.length,
       );
     } else {
+      // console.log({ catalogDb });
       return createRequestPagination(catalogDb, page, limit, totalDb);
     }
   }

@@ -4,14 +4,18 @@ import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
 import { OptionalJwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/roles.decorator';
 import { RequestSearchDto } from './dto/request-search.dto';
-import { SearchResultResponse } from './dto/response-search.dto';
-import { ParserService } from 'src/integrations/parser/parser.service';
+import {
+  CarRecommendationDto,
+  ProductRecommendationDto,
+  SearchResultResponse,
+} from './dto/response-search.dto';
+import { ParserServiceKroonOil } from 'src/integrations/parser/parser.kroonoil.service';
 
 @Controller('search')
 export class SearchController {
   constructor(
     private readonly searchService: SearchService,
-    private readonly parserService: ParserService,
+    private readonly parserServiceKroonOil: ParserServiceKroonOil,
   ) {}
 
   @ApiBearerAuth()
@@ -30,20 +34,27 @@ export class SearchController {
   }
 
   @Get('kroon/search')
+  @ApiOkResponse({
+    type: ProductRecommendationDto,
+  })
   kroonSearch(@Query('query') query: string) {
+    console.log({ query });
     if (!query?.trim()) {
       throw new Error('Query is required');
     }
 
-    return this.parserService.kroonSmartSearch(query.trim());
+    return this.parserServiceKroonOil.kroonSmartSearch(query.trim());
   }
 
   @Get('kroon/product-recommendation')
+  @ApiOkResponse({
+    type: CarRecommendationDto,
+  })
   kroonProductRecommendation(@Query('url') url: string) {
     if (!url?.trim()) {
       throw new Error('URL is required');
     }
 
-    return this.parserService.kroonProductRecommendation(url.trim());
+    return this.parserServiceKroonOil.kroonProductRecommendation(url.trim());
   }
 }

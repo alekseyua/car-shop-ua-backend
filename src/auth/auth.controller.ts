@@ -1,13 +1,31 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/registration-auth.dto';
 import { LoginDto } from './dto/login-auth.dto';
 import { ApiOkResponse } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { RequestWithCookies } from './types/auth.type';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  private setRefreshCookie(res: Response, refreshToken: string) {
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/auth',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+  }
 
   @Post('register')
   @ApiOkResponse({
@@ -16,7 +34,6 @@ export class AuthController {
       type: 'object',
       properties: {
         accessToken: { type: 'string' },
-        refreshToken: { type: 'string' },
       },
     },
   })
@@ -32,7 +49,8 @@ export class AuthController {
       path: '/auth',
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
-    return result;
+    const { refreshToken, ...response } = result;
+    return response;
   }
 
   @Post('login')
@@ -42,7 +60,6 @@ export class AuthController {
       type: 'object',
       properties: {
         accessToken: { type: 'string' },
-        refreshToken: { type: 'string' },
         user: {
           type: 'object',
           properties: {
@@ -70,7 +87,8 @@ export class AuthController {
       path: '/auth',
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
-    return result;
+    const { refreshToken, ...response } = result;
+    return response;
   }
 
   @Post('refresh')
@@ -80,12 +98,26 @@ export class AuthController {
       type: 'object',
       properties: {
         accessToken: { type: 'string' },
-        refreshToken: { type: 'string' },
       },
     },
   })
-  refresh(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refresh(refreshToken);
+  async refresh(
+    @Req() req: RequestWithCookies,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token missing');
+    }
+
+    const tokens = await this.authService.refresh(refreshToken);
+
+    // Обновляем cookie при ротации refresh-токена.
+    this.setRefreshCookie(res, tokens.refreshToken);
+    return {
+      accessToken: tokens.accessToken,
+    };
   }
 
   @Post('logout')

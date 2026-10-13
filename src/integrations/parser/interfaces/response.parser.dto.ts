@@ -40,23 +40,6 @@ export interface KroonProductRecommendationProductDto {
   title: string;
   url: string;
   id: number;
-  code?: string;
-}
-
-export interface KroonProductRecommendationProductDto {
-  title: string;
-  url: string;
-  id: number;
-
-  /**
-   * Kroon internal product code.
-   * Example: 02226
-   */
   kroonCode?: string;
-
-  /**
-   * External Autotechnics code.
-   * Example: KL02226
-   */
   code?: string;
 }

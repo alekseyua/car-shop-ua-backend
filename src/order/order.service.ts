@@ -3,10 +3,14 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { generateOrderNumber } from 'src/shared/common/helpers/helpers';
 import { OrderStatus } from 'generated/prisma/enums';
+import { TelegramService } from 'src/telegram/telegram.service';
 
 @Injectable()
 export class OrderService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly telegramService: TelegramService,
+  ) {}
   /**
    * пока логика такая что создаетс заказ  исход из элементов в корзине,
    * но в дальнейшем нужно сделать чекбоксы и выбирать нужные элементы для заказа, а не все из корзины
@@ -82,6 +86,39 @@ export class OrderService {
           cartId,
         },
       });
+      try {
+        await this.telegramService.sendOrderNotification({
+          id: order.id,
+          customerName:
+            order.deliveryLastname +
+            ' ' +
+            order.deliveryFirstname +
+            '( ' +
+            (order.userId
+              ? order.userId
+              : 'Незареєстрований ' + order.guestSessionId) +
+            ' )',
+          phone: order.deliveryPhone,
+          items: order.items.map((item) => ({
+            name: item.title,
+            quantity: item.quantity,
+            price: Number(item.price),
+          })),
+          total: Number(order.totalPrice),
+          delivery: [
+            order.deliveryCity,
+            order.deliveryStreet,
+            order.deliveryHouse,
+            order.deliveryApartment,
+            order.deliveryPoint,
+          ]
+            .filter((value) => value != null && String(value).trim() !== '')
+            .join(', '),
+        });
+      } catch (error) {
+        // Ошибка Telegram не должна отменять сохранённый заказ.
+        console.error('Order notification failed:', error);
+      }
 
       return order;
     });

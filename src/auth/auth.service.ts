@@ -120,8 +120,17 @@ export class AuthService {
       if (!isMatch) {
         throw new UnauthorizedException('Invalid refresh token');
       }
+      const tokens = await this.generateTokens(user.id, user.email);
 
-      return this.generateTokens(user.id, user.email);
+      const hash = await bcrypt.hash(tokens.refreshToken, 10);
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { refreshTokenHash: hash },
+      });
+
+      return tokens;
+      // return this.generateTokens(user.id, user.email);
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }

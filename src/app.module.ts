@@ -25,6 +25,7 @@ import { AccessoriesModule } from './accessories/accessories.module';
 import { SearchModule } from './search/search.module';
 import { ProxyModule } from './proxy/proxy.module';
 import { GuestSessionModule } from './guest-session/guest-session.module';
+import { TelegramModule } from './telegram/telegram.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { GuestSessionModule } from './guest-session/guest-session.module';
     SearchModule,
     ProxyModule,
     GuestSessionModule,
+    TelegramModule,
   ],
   controllers: [],
   providers: [AccessoriesService],
