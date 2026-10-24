@@ -40,6 +40,8 @@ export class CartController {
     @CurrentUser() user: Express.User | undefined,
     @GuestSession() guestSessionId: string | undefined,
   ): Promise<CartResponse> {
+    console.log(user, guestSessionId);
+
     return this.cartService.getCart(user?.userId, guestSessionId);
   }
 

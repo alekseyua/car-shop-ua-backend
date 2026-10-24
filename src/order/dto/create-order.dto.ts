@@ -56,6 +56,14 @@ export class CreateOrderDto {
   @IsString()
   'deliveryPointRef': string;
 
+  @IsString()
+  @IsOptional()
+  'deliveryCityRef': string;
+
+  @IsOptional()
+  @IsString()
+  'deliveryMethod': string;
+
   @IsOptional()
   @IsString()
   'deliveryStreet': string;

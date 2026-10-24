@@ -249,6 +249,7 @@ model Order {
   orderNumber String @unique
 
   status     OrderStatus @default(PENDING)
+  currency    String      @default("UAH")
   paidAt DateTime?
   shippedAt DateTime?
   deliveredAt DateTime?
@@ -274,6 +275,7 @@ model Order {
 
 
   items OrderItem[]
+  payments    Payment[]
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -421,4 +423,39 @@ model GarageCar {
   createdAt DateTime @default(now())
 
   @@unique([garageId, modificationId])
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REVERSED
+}
+
+enum PaymentProvider {
+  LIQPAY
+}
+
+model Payment {
+  id                Int             @id @default(autoincrement())
+
+  orderId           Int
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  provider          PaymentProvider @default(LIQPAY)
+  providerOrderId   String          @unique
+  amount            Decimal         @db.Decimal(10, 2)
+  currency          String          @default("UAH")
+
+  status            PaymentStatus   @default(PENDING)
+  providerStatus    String?
+
+  paidAt            DateTime?
+  failureReason     String?
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([orderId, createdAt])
+  @@index([status, createdAt])
 }

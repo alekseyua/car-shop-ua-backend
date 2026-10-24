@@ -38,7 +38,7 @@ export class AuthService {
         firstName: dto.firstName,
         birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
 
-        nickname: dto?.nickname ?? (await generateNickname()),
+        nickname: dto?.nickname ?? generateNickname(),
         email: dto.email,
         phone: dto.phone,
 
@@ -137,7 +137,7 @@ export class AuthService {
   }
 
   async logout(userId: number) {
-    await this.prisma.user.update({
+    return await this.prisma.user.update({
       where: {
         id: userId,
       },

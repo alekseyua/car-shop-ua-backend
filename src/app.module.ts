@@ -26,6 +26,7 @@ import { SearchModule } from './search/search.module';
 import { ProxyModule } from './proxy/proxy.module';
 import { GuestSessionModule } from './guest-session/guest-session.module';
 import { TelegramModule } from './telegram/telegram.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { TelegramModule } from './telegram/telegram.module';
     ProxyModule,
     GuestSessionModule,
     TelegramModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [AccessoriesService],

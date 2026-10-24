@@ -42,6 +42,7 @@ export class OrderService {
       0,
     );
 
+    console.log({dto})
     return this.prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
