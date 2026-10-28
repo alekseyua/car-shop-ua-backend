@@ -3,7 +3,6 @@ export const adminConfig = {
   markupPercent: 15,
   novaPoshtaApiKey: '82bfc69007ad1f0e116a17aa425c75e6',
   telegram: {
-    TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHAT_ID: [8148644383, 783707169],
   },
 };

@@ -3,6 +3,6 @@ export default () => ({
   LIQPAY_PRIVATE_KEY: process.env.LIQPAY_PRIVATE_KEY,
   LIQPAY_CHECKOUT_URL: process.env.LIQPAY_CHECKOUT_URL,
   LIQPAY_SANDBOX: process.env.LIQPAY_SANDBOX,
-  BACKEND_URL: process.env.BACKEND_URL,
+  LIQPAY_BACKEND_URL: process.env.LIQPAY_BACKEND_URL,
   FRONTEND_URL: process.env.FRONTEND_URL,
 });

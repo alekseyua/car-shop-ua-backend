@@ -44,3 +44,11 @@ src/
   a) fetch GET  /accessories
   b) fetch GET /excel
   
+для тестирования оплат создаем тунель на макбуке
+ssh -i ~/.ssh/liqpay_tunnel \
+  -N -T \
+  -o ExitOnForwardFailure=yes \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -R 127.0.0.1:9400:localhost:4000 \
+  root@157.250.203.32

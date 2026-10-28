@@ -28,8 +28,10 @@ export class GuestSessionController {
 
     res.cookie('guest_session_id', session.id, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+            // secure: process.env.NODE_ENV === 'production',
+secure: true,
+      // sameSite: 'lax',
+sameSite: 'none',
       maxAge: 30 * 24 * 60 * 60 * 1000,
       // path: '/',
     });

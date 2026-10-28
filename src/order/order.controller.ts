@@ -8,7 +8,6 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { OptionalJwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderService } from './order.service';
 import { UpdateOrderStatusDto } from './dto/update-order.dto';
@@ -16,6 +15,7 @@ import { CurrentUser, Roles } from 'src/auth/decorators/roles.decorator';
 import { Role } from 'generated/prisma/enums';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { GuestSession } from 'src/guest-session/decorators/guestSession';
+import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt-auth.guard';
 
 @Controller('orders')
 @UseGuards(OptionalJwtAuthGuard)
@@ -44,6 +44,9 @@ export class OrdersController {
     @CurrentUser() user: Express.User,
     @GuestSession() guestSessionId: string | undefined,
   ) {
+    console.log({
+      u: user?.userId, gu: guestSessionId,
+    })
     return this.ordersService.findAllOrders(user?.userId, guestSessionId);
   }
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { productCachePriceDto } from './ioredis.types';
@@ -13,12 +13,41 @@ import {
 @Injectable()
 export class IoredisService {
   private readonly redis: Redis;
+  private readonly logger = new Logger(IoredisService.name);
   constructor(private readonly config: ConfigService) {
     this.redis = new Redis({
       host: this.config.get('REDIS_HOST'),
       port: this.config.get('REDIS_PORT'),
       password: this.config.get('REDIS_USER_PASSWORD'),
       username: this.config.get('REDIS_USER'),
+    });
+    this.redis.on('connect', () => {
+      this.logger.log('Подключение к Redis установлено');
+    });
+
+    this.redis.on('ready', () => {
+      this.logger.log('Redis готов принимать команды');
+    });
+
+    this.redis.on('error', (error: Error) => {
+      this.logger.error(
+        `Ошибка подключения к Redis: ${error.message}`,
+        error.stack,
+      );
+    });
+
+    this.redis.on('close', () => {
+      this.logger.warn('Соединение с Redis закрыто');
+    });
+
+    this.redis.on('reconnecting', (delay: number) => {
+      this.logger.warn(
+        `Redis недоступен. Повторное подключение через ${delay} мс`,
+      );
+    });
+
+    this.redis.on('end', () => {
+      this.logger.warn('Redis: попытки подключения прекращены');
     });
   }
 

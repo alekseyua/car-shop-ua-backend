@@ -1,7 +1,6 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { SearchService } from './search.service';
 import { ApiBearerAuth, ApiOkResponse } from '@nestjs/swagger';
-import { OptionalJwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/roles.decorator';
 import { RequestSearchDto } from './dto/request-search.dto';
 import {
@@ -10,6 +9,7 @@ import {
   SearchResultResponse,
 } from './dto/response-search.dto';
 import { ParserServiceKroonOil } from 'src/integrations/parser/parser.kroonoil.service';
+import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt-auth.guard';
 
 @Controller('search')
 export class SearchController {

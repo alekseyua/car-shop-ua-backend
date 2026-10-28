@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash, timingSafeEqual } from 'node:crypto';
 
@@ -7,7 +7,7 @@ export class LiqPayService {
   private readonly publicKey: string;
   private readonly privateKey: string;
   private readonly checkoutUrl: string;
-
+  private readonly logger = new Logger(LiqPayService.name);
   constructor(config: ConfigService) {
     this.publicKey = config.getOrThrow<string>('LIQPAY_PUBLIC_KEY');
 
@@ -73,11 +73,6 @@ export class LiqPayService {
 
       sandbox: 1,
     };
-console.log('LiqPay checkout params:', {
-  publicKeyPrefix: this.publicKey.slice(0, 8),
-  checkoutUrl: this.checkoutUrl,
-  payload,
-});
     const json = JSON.stringify(payload);
     const data = Buffer.from(json, 'utf8').toString('base64');
     const signature = this.createSignature(data);
@@ -91,29 +86,37 @@ console.log('LiqPay checkout params:', {
 
   decodeCallback(data: string): Record<string, unknown> {
     try {
-      // Принимаем только канонический Base64.
       const decodedBuffer = Buffer.from(data, 'base64');
 
       if (decodedBuffer.toString('base64') !== data) {
+        this.logger.warn('Invalid Base64 in LiqPay callback');
         throw new Error('Invalid Base64');
       }
 
-      const payload: unknown = JSON.parse(decodedBuffer.toString('utf8'));
+      const decodedText = decodedBuffer.toString('utf8');
+
+      // this.logger.debug(`LiqPay decoded callback: ${decodedText}`);
+
+      const payload: unknown = JSON.parse(decodedText);
 
       if (
         typeof payload !== 'object' ||
         payload === null ||
         Array.isArray(payload)
       ) {
+        this.logger.warn('Invalid LiqPay callback payload structure');
         throw new Error('Invalid payload');
       }
 
-      return payload as Record<string, unknown>;
+      const callback = payload as Record<string, unknown>;
+
+      return callback;
     } catch {
+      this.logger.warn('Failed to decode LiqPay callback');
+
       throw new BadRequestException('Invalid LiqPay callback payload');
     }
   }
-
   isPublicKeyValid(value: unknown): boolean {
     return value === this.publicKey;
   }

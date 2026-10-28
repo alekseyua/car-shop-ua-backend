@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Logger,
   Param,
   ParseIntPipe,
   Post,
@@ -13,13 +14,14 @@ import {
 import { ApiBearerAuth } from '@nestjs/swagger';
 
 import { PaymentsService } from './payments.service';
-import { OptionalJwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/decorators/roles.decorator';
 import { GuestSession } from 'src/guest-session/decorators/guestSession';
 import { CreatePaymentDto } from './dto/request-payment.dto';
+import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt-auth.guard';
 
 @Controller('payments')
 export class PaymentsController {
+  private readonly logger = new Logger(PaymentsController.name);
   constructor(private readonly paymentsService: PaymentsService) {}
 
   @Get(':paymentId/checkout')
@@ -53,13 +55,36 @@ export class PaymentsController {
     });
   }
 
+  // @Post('webhook')
+  // @HttpCode(200)
+  // webhook(@Body() body: { data?: string; signature?: string }) {
+  //   if (typeof body?.data !== 'string' || typeof body?.signature !== 'string') {
+  //     throw new BadRequestException('Invalid webhook body');
+  //   }
+
+  //   return this.paymentsService.handleWebhook(body.data, body.signature);
+  // }
   @Post('webhook')
   @HttpCode(200)
   webhook(@Body() body: { data?: string; signature?: string }) {
+    this.logger.log('========== LIQPAY WEBHOOK RECEIVED ==========');
+
+    this.logger.log(
+      JSON.stringify({
+        receivedAt: new Date().toISOString(),
+        hasBody: !!body,
+        dataType: typeof body?.data,
+        dataLength: body?.data?.length,
+        hasSignature: typeof body?.signature === 'string',
+        signatureLength: body?.signature?.length,
+      }),
+    );
+
     if (typeof body?.data !== 'string' || typeof body?.signature !== 'string') {
+      this.logger.error('LiqPay webhook: invalid request body');
       throw new BadRequestException('Invalid webhook body');
     }
-
+    // return 'ok work '
     return this.paymentsService.handleWebhook(body.data, body.signature);
   }
 

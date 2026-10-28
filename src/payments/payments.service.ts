@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,13 +11,16 @@ import { randomUUID } from 'node:crypto';
 
 import { PrismaService } from 'src/core/prisma/prisma.service';
 import { LiqPayService } from './liqpay.service';
+import { TelegramService } from 'src/telegram/telegram.service';
 
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly liqpay: LiqPayService,
     private readonly config: ConfigService,
+    private readonly telegramService: TelegramService,
   ) {}
 
   async createCheckout(params: {
@@ -25,7 +29,7 @@ export class PaymentsService {
     guestSessionId?: string;
   }) {
     const { orderId, userId, guestSessionId } = params;
-
+    this.logger.log(`POST checkout requested: orderId=${orderId}`);
     // Должен быть установлен ровно один способ владения заказом.
     if (
       (userId == null && !guestSessionId) ||
@@ -79,7 +83,7 @@ export class PaymentsService {
     });
 
     // const frontendUrl = this.config.getOrThrow<string>('FRONTEND_URL');
-    // const backendUrl = this.config.getOrThrow<string>('BACKEND_URL');
+    // const backendUrl = this.config.getOrThrow<string>('LIQPAY_BACKEND_URL');
     return {
       paymentId: payment.id,
     };
@@ -101,6 +105,7 @@ export class PaymentsService {
     guestSessionId?: string;
   }) {
     const { paymentId, userId, guestSessionId } = params;
+    this.logger.log(`GET checkout requested: paymentId=${paymentId}`);
 
     if (
       (userId == null && !guestSessionId) ||
@@ -139,7 +144,7 @@ export class PaymentsService {
 
     const frontendUrl = this.config.getOrThrow<string>('FRONTEND_URL');
 
-    const backendUrl = this.config.getOrThrow<string>('BACKEND_URL');
+    const backendUrl = this.config.getOrThrow<string>('LIQPAY_BACKEND_URL');
 
     return this.liqpay.createCheckout({
       orderId: payment.providerOrderId,
@@ -147,29 +152,45 @@ export class PaymentsService {
       currency: payment.currency,
       description: `Payment for order ${order.orderNumber}`,
       resultUrl: `${frontendUrl}/profile`,
-      serverUrl: `${backendUrl}/payments/webhook`,
+      serverUrl: `${backendUrl}/api/payments/webhook`,
     });
   }
 
   async handleWebhook(data: string, signature: string) {
-    if (!this.liqpay.verifySignature(data, signature)) {
+this.logger.log('-----------------------handleWebhook start-------------------------');
+    const signatureValid = this.liqpay.verifySignature(data, signature);
+
+    if (!signatureValid) {
+      this.logger.warn('LiqPay webhook signature verification failed');
+
       throw new BadRequestException('Invalid LiqPay signature');
     }
 
     const payload = this.liqpay.decodeCallback(data);
-console.log('LiqPay webhook:', {
-  status: payload.status,
-  orderId: payload.order_id,
-});
-    if (!this.liqpay.isPublicKeyValid(payload.public_key)) {
-      throw new BadRequestException('Invalid LiqPay public key');
-    }
+
+    this.logger.log('========== LIQPAY CALLBACK DATA ==========');
+
+    this.logger.log(` ========== LIQPAY CALLBACK DATA ==========
+      ${JSON.stringify({
+        status: payload.status,
+        order_id: payload.order_id,
+        amount: payload.amount,
+        currency: payload.currency,
+        public_key_valid: this.liqpay.isPublicKeyValid(payload.public_key),
+        action: payload.action,
+        type: payload.type,
+        payment_id: payload.payment_id,
+        err_code: payload.err_code,
+        err_description: payload.err_description,
+      })}`);
 
     const providerOrderId = payload.order_id;
     const status = payload.status;
     const amount = payload.amount;
     const currency = payload.currency;
-
+this.logger.log(
+  `LiqPay status received: ${status}; orderId=${providerOrderId}`,
+);
     if (
       typeof providerOrderId !== 'string' ||
       typeof status !== 'string' ||
@@ -206,11 +227,18 @@ console.log('LiqPay webhook:', {
     const sandboxEnabled = this.config.get<string>('LIQPAY_SANDBOX') === 'true';
     const isSuccessful =
       status === 'success' || (status === 'sandbox' && sandboxEnabled);
+    this.logger.log(
+      `Payment decision: ${JSON.stringify({
+        providerOrderId,
+        status,
+        sandboxEnabled,
+        isSuccessful,
+      })}`,
+    );
+
     if (!isSuccessful) {
-      // Не переводим уже успешный платёж обратно в FAILED.
-      // Промежуточные статусы сохраняем, терминальные — обрабатываем отдельно.
       if (status === 'failure' || status === 'error') {
-        await this.prisma.payment.updateMany({
+        const failedPayment = await this.prisma.payment.updateMany({
           where: {
             id: payment.id,
             status: PaymentStatus.PENDING,
@@ -220,9 +248,39 @@ console.log('LiqPay webhook:', {
             providerStatus: status,
           },
         });
+
+        // Уведомляем только при первом переходе в FAILED.
+        if (failedPayment.count === 1) {
+          try {
+            const order = await this.prisma.order.findUnique({
+              where: { id: payment.orderId },
+              include: { items: true },
+            });
+
+            if (order) {
+              await this.telegramService.sendOrderPaymentFailedNotification({
+                orderId: order.id,
+                customerName:
+                  `${order.deliveryLastname} ${order.deliveryFirstname}`.trim(),
+                phone: order.deliveryPhone,
+                amount: Number(payment.amount),
+                currency: payment.currency,
+                reason: status,
+                providerOrderId: payment.providerOrderId,
+                errorDescription:
+                  typeof payload.err_description === 'string'
+                    ? payload.err_description
+                    : undefined,
+              });
+            }
+          } catch (error) {
+            this.logger.error(
+              `Failed payment notification failed: orderId=${payment.orderId}`,
+              error instanceof Error ? error.stack : String(error),
+            );
+          }
+        }
       } else if (status === 'reversed') {
-        // Обратная операция требует отдельной бизнес-логики:
-        // заказ мог уже уйти в PROCESSING или SHIPPED.
         await this.prisma.payment.updateMany({
           where: {
             id: payment.id,
@@ -293,7 +351,51 @@ console.log('LiqPay webhook:', {
         orderUpdated: orderUpdate.count === 1,
       };
     });
+    if (result.orderUpdated) {
+      try {
+        const order = await this.prisma.order.findUnique({
+          where: { id: payment.orderId },
+          include: {
+            items: true,
+          },
+        });
 
+        if (!order) {
+          this.logger.error(
+            `Order not found after payment: orderId=${payment.orderId}`,
+          );
+        } else {
+          await this.telegramService.sendOrderPaidNotification({
+            id: order.id,
+            customerName:
+              `${order.deliveryLastname} ${order.deliveryFirstname} ` +
+              `(${order.userId ?? `Незареєстрований ${order.guestSessionId}`})`,
+            phone: order.deliveryPhone,
+            items: order.items.map((item) => ({
+              name: item.title,
+              itemNo: item.itemNo,
+              quantity: item.quantity,
+              price: Number(item.price),
+            })),
+            total: Number(order.totalPrice),
+            delivery: [
+              order.deliveryCity,
+              order.deliveryStreet,
+              order.deliveryHouse,
+              order.deliveryApartment,
+              order.deliveryPoint,
+            ]
+              .filter((value) => value != null && String(value).trim() !== '')
+              .join(', '),
+          });
+        }
+      } catch (error) {
+        this.logger.error(
+          `Paid order notification failed: orderId=${payment.orderId}`,
+          error instanceof Error ? error.stack : String(error),
+        );
+      }
+    }
     if (!result.orderUpdated && !result.duplicate) {
       // Добавь логирование/уведомление оператору:
       // деньги получены, но заказ не удалось перевести в PAID.
