@@ -8,15 +8,20 @@ import * as path from 'node:path';
 
 async function bootstrap() {
   const certDir = path.join(process.env.HOME!, 'localhost-certs');
-  const httpsOptions = {
-    key: fs.readFileSync(path.join(certDir, 'dev-key.pem')),
-    cert: fs.readFileSync(path.join(certDir, 'dev.pem')),
-  };
+  // const httpsOptions = {
+  //   key: fs.readFileSync(path.join(certDir, 'dev-key.pem')),
+  //   cert: fs.readFileSync(path.join(certDir, 'dev.pem')),
+  // };
   const app = await NestFactory.create(AppModule, {
-    httpsOptions,
+    // httpsOptions,
   });
   app.enableCors({
-    origin: ['https://test-front:3000', 'https://autopro.pp.ua'],
+    origin: [
+      'https://test-front:3000',
+      'https://autopro.pp.ua',
+      'https://www.autopro.pp.ua',
+      'http://autopro.pp.ua',
+    ],
     credentials: true,
   });
   app.enableShutdownHooks();
