@@ -259,15 +259,11 @@ export class TelegramService {
     await this.sendMessage(message);
   }
 
-  async createLinkToken(
-    userId: number,
-    guestSessionId?: string,
-  ): Promise<string> {
+  async createLinkToken(userId: number): Promise<string> {
     const token = randomBytes(32).toString('hex');
 
     const payload = {
       userId,
-      guestSessionId,
       createdAt: Date.now(),
     };
 
@@ -341,11 +337,11 @@ export class TelegramService {
         await this.handleStartToken(chatId, message.from, token);
         return;
       }
-
+      const nameSite = this.configService.getOrThrow<string>('NAME_SITE');
       await this.sendToChat(
         chatId,
         [
-          '👋 <b>Добро пожаловать в Car Spare!</b>',
+          `👋 <b>Добро пожаловать в ${nameSite}!</b>`,
           '',
           'Я помогу тебе:',
           '📦 Узнать статус заказов',
@@ -433,7 +429,8 @@ export class TelegramService {
     from: any,
     token: string,
   ): Promise<void> {
-    const payload: TelegramLinkPayload | null = await this.consumeLinkToken(token);
+    const payload: TelegramLinkPayload | null =
+      await this.consumeLinkToken(token);
 
     if (!payload) {
       await this.sendToChat(

@@ -7,22 +7,29 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 async function bootstrap() {
-  const certDir = path.join(process.env.HOME!, 'localhost-certs');
-  const httpsOptions = {
-    key: fs.readFileSync(path.join(certDir, 'dev-key.pem')),
-    cert: fs.readFileSync(path.join(certDir, 'dev.pem')),
-  };
-  const app = await NestFactory.create(AppModule, {
-    httpsOptions,
-  });
+  const isProduction = process.env.NODE_ENV === 'production';
+  const AppModuleParams = isProduction
+    ? {}
+    : {
+        httpsOptions: {
+          key: fs.readFileSync(
+            path.join(process.env.HOME!, 'localhost-certs/dev-key.pem'),
+          ),
+          cert: fs.readFileSync(
+            path.join(process.env.HOME!, 'localhost-certs/dev.pem'),
+          ),
+        },
+      };
+  const corsOriginUrl = isProduction
+    ? [
+        'https://autopro.pp.ua',
+        'https://www.autopro.pp.ua',
+        'http://autopro.pp.ua',
+      ]
+    : ['http://localhost:3000', 'https://front.com:3000'];
+  const app = await NestFactory.create(AppModule, AppModuleParams);
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'https://front.com:3000',
-      'https://autopro.pp.ua',
-      'https://www.autopro.pp.ua',
-      'http://autopro.pp.ua',
-    ],
+    origin: corsOriginUrl,
     credentials: true,
   });
   app.enableShutdownHooks();

@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
   UseGuards,
   Headers,
+  Logger,
 } from '@nestjs/common';
 import { TelegramService } from './telegram.service';
 import { CurrentUser } from 'src/auth/decorators/roles.decorator';
@@ -12,10 +13,12 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt-auth.guard';
 import { GuestSession } from 'src/guest-session/decorators/guestSession';
 import { ConfigService } from '@nestjs/config';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @ApiBearerAuth()
 @Controller('telegram')
 export class TelegramController {
+  logger = new Logger(TelegramController.name);
   constructor(
     private readonly telegramService: TelegramService,
     private readonly configService: ConfigService,
@@ -23,16 +26,11 @@ export class TelegramController {
     // private readonly parserServiceKroonOil: ParserServiceKroonOil,
   ) {}
 
-  @UseGuards(OptionalJwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post('link')
-  async createTelegramLink(
-    @CurrentUser() user: Express.User,
-    @GuestSession() guestSessionId: string | undefined,
-  ) {
-    const token = await this.telegramService.createLinkToken(
-      user.userId,
-      guestSessionId,
-    );
+  async createTelegramLink(@CurrentUser() user: Express.User) {
+    this.logger.log({ user });
+    const token = await this.telegramService.createLinkToken(user.userId);
 
     return {
       url: `https://t.me/car_spare_bot?start=${token}`,
