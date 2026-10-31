@@ -40,9 +40,6 @@ export const getProductFromPrice = async (
 ): Promise<productCachePriceDto | null> => {
   const data = await redis.hgetall('price:' + itemNo);
   if (!data || Object.keys(data).length === 0) {
-    console.log(
-      'getProductFromPrice failde to find product from price cache - ' + itemNo,
-    );
     return null;
   }
   const stock = JSON.parse(data.stock) as Stock;
@@ -194,9 +191,6 @@ export const normalizeReplaces = async (
       ?.filter((item: ProductItem) => item.inStock)
       ?.map(async (item: ProductItem): Promise<NormalizeProductItem> => {
         const cachePrice = await getProductFromPrice(item.itemNo, redis);
-        if (!cachePrice) {
-          console.log('itemNo - ', item.itemNo, '---', item.stock);
-        }
         return normalizeResponseProductItem(item, cachePrice);
       }),
   );

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { CarModelsModule } from './catalog/models/models.module';
 import { CarBrandsModule } from './catalog/brands/brands.module';
 import { CoreModule } from './core/core.module';
@@ -27,6 +27,7 @@ import { ProxyModule } from './proxy/proxy.module';
 import { GuestSessionModule } from './guest-session/guest-session.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { PaymentsModule } from './payments/payments.module';
+import { GuestSessionMiddleware } from './guest-session/middleware/guest-session.middleware';
 
 @Module({
   imports: [
@@ -61,4 +62,8 @@ import { PaymentsModule } from './payments/payments.module';
   controllers: [],
   providers: [AccessoriesService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(GuestSessionMiddleware).forRoutes('*');
+  }
+}

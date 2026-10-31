@@ -29,16 +29,13 @@ export class ExcelService {
     if (!worksheet) {
       throw new Error('Excel not have worksheet');
     }
-    let counter = 1;
     const table: ExcelJs.CellValue[][] = [];
     worksheet.eachRow((row) => {
-      counter++;
       if (!Array.isArray(row.values)) {
         return;
       }
       table.push(row.values);
     });
-    console.log('Total write ' + counter);
     await this.redis.savePriceRedisPipeline(table);
 
     return `price download complate and save db`;

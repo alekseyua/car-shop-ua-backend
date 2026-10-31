@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 
@@ -24,6 +25,7 @@ import { CartResponse } from './dto/response.cart.dto';
 
 @Injectable()
 export class CartService {
+  logger = new Logger(CartService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly parser: ParserService,
@@ -475,6 +477,7 @@ export class CartService {
     userId: number | undefined,
     guestSessionId: string | undefined,
   ): Promise<CartResponse> {
+    this.logger.log('mergeGuestCart', { userId, guestSessionId });
     if (!userId) {
       throw new BadRequestException('Authorization is required');
     }

@@ -3,9 +3,11 @@ import {
   Controller,
   Delete,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 
@@ -24,6 +26,7 @@ import { OptionalJwtAuthGuard } from 'src/auth/guards/optional-jwt-auth.guard';
 @Controller('cart')
 @UseGuards(OptionalJwtAuthGuard)
 export class CartController {
+  private readonly logger = new Logger(CartController.name);
   constructor(private readonly cartService: CartService) {}
 
   /**
@@ -40,8 +43,7 @@ export class CartController {
     @CurrentUser() user: Express.User | undefined,
     @GuestSession() guestSessionId: string | undefined,
   ): Promise<CartResponse> {
-    console.log(user, guestSessionId);
-
+    this.logger.log('getCart ', { user, guestSessionId });
     return this.cartService.getCart(user?.userId, guestSessionId);
   }
 
@@ -54,6 +56,8 @@ export class CartController {
     @CurrentUser() user: Express.User | undefined,
     @Body() dto: AddToCartDto,
   ): Promise<CartResponse> {
+    this.logger.log('addItem ',{ user, guestSessionId });
+
     return this.cartService.addItem(user?.userId, guestSessionId, dto);
   }
 
@@ -116,19 +120,17 @@ export class CartController {
   /**
    * Синхронизация корзины.
    */
-  // @Post('sync')
-  // sync(
-  //   @CurrentUser() user: Express.User | undefined,
-  //   @Body() dto: AddToCartDto[],
-  //   @GuestSession() guestSessionId: string | undefined,
-  // ): Promise<CartResponse> {
-  //   return this.cartService.syncItemsCart(user?.userId, guestSessionId, dto);
-  // }
   @Post('merge')
   sync(
     @CurrentUser() user: Express.User | undefined,
     @GuestSession() guestSessionId: string | undefined,
+    @Req() req,
   ) {
+    console.log({
+      url: req.originalUrl,
+      cookies: req.cookies,
+      cookieHeader: req.headers.cookie,
+    });
     return this.cartService.mergeGuestCart(user?.userId, guestSessionId);
   }
 }

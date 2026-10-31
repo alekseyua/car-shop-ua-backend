@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ParserService } from './parser.service';
-import { ParserServiceKroonOil } from './parser.kroonoil.service';
 
 @Module({
   imports: [],
-  providers: [ParserService, ParserServiceKroonOil],
-  exports: [ParserService, ParserServiceKroonOil],
+  providers: [ParserService],
+  exports: [ParserService],
 })
 export class ParserModule {}

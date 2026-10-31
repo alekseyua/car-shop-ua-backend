@@ -2,6 +2,7 @@ import { Controller, Get, Post, Res } from '@nestjs/common';
 import { GuestSessionService } from './guest-session.service';
 import { Request, Response } from 'express';
 import { GuestSession } from './decorators/guestSession';
+import { addCookiesGuestSession } from 'src/shared/common/helpers/auth.helper';
 
 @Controller('guest-session')
 export class GuestSessionController {
@@ -26,15 +27,7 @@ export class GuestSessionController {
     // Cookie нет или сессия уже истекла/удалена
     const session = await this.guestSessionService.create();
 
-    res.cookie('guest_session_id', session.id, {
-      httpOnly: true,
-            // secure: process.env.NODE_ENV === 'production',
-secure: true,
-      // sameSite: 'lax',
-sameSite: 'none',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      // path: '/',
-    });
+    addCookiesGuestSession(res, session.id);
     return {
       success: true,
       expiresAt: session.expiresAt,

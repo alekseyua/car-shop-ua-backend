@@ -25,54 +25,79 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     const existingUser = await this.prisma.user.findUnique({
-      where: {
-        email: dto.email,
-      },
+      where: { email: dto.email },
     });
 
     if (existingUser) {
-      throw new ConflictException('User already exists');
+      throw new ConflictException({
+        code: 'EMAIL_ALREADY_EXISTS',
+        message: 'User with this email already exists',
+      });
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.prisma.user.create({
-      data: {
-        lastName: dto.lastName,
-        firstName: dto.firstName,
-        birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
-
-        nickname: dto?.nickname ?? generateNickname(),
-        email: dto.email,
-        phone: dto.phone,
-
-        passwordHash,
-      },
-    });
-    const tokens = await this.generateTokens(user.id, user.email);
-
-    const hash = await bcrypt.hash(tokens.refreshToken, 10);
     try {
+      const user = await this.prisma.user.create({
+        data: {
+          lastName: dto.lastName,
+          firstName: dto.firstName,
+          birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
+          nickname: dto.nickname ?? generateNickname(),
+          email: dto.email,
+          phone: dto.phone,
+          passwordHash,
+        },
+      });
+
+      const tokens = await this.generateTokens(user.id, user.email);
+
+      const hash = await bcrypt.hash(tokens.refreshToken, 10);
+
       await this.prisma.user.update({
         where: { id: user.id },
         data: {
           refreshTokenHash: hash,
         },
       });
+
+      return tokens;
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        throw new ConflictException(
-          'This Google account or email is already in use',
-        );
+        const target = error.meta?.target;
+
+        if (Array.isArray(target) && target.includes('email')) {
+          throw new ConflictException({
+            code: 'EMAIL_ALREADY_EXISTS',
+            message: 'Ця електронна адреса вже зареєстрована',
+          });
+        }
+
+        if (Array.isArray(target) && target.includes('phone')) {
+          throw new ConflictException({
+            code: 'PHONE_ALREADY_EXISTS',
+            message: 'Цей номер телефону вже зареєстрований',
+          });
+        }
+
+        if (Array.isArray(target) && target.includes('nickname')) {
+          throw new ConflictException({
+            code: 'NICKNAME_ALREADY_EXISTS',
+            message: 'Цей нікнейм уже зайнятий',
+          });
+        }
+
+        throw new ConflictException({
+          code: 'USER_ALREADY_EXISTS',
+          message: 'Користувач вже існує',
+        });
       }
 
       throw error;
     }
-
-    return tokens;
   }
 
   async login(dto: LoginDto) {
@@ -173,7 +198,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    if (!Number.isInteger(payload.sub) || typeof payload.email !== 'string') {
+    if (
+      !payload ||
+      !Number.isSafeInteger(payload.sub) ||
+      payload.sub <= 0 ||
+      typeof payload.email !== 'string'
+    ) {
       throw new UnauthorizedException('Invalid refresh token payload');
     }
 
@@ -544,10 +574,21 @@ export class AuthService {
       );
     }
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { googleId },
-    });
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { googleId },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('This Google account is already linked');
+      }
+
+      throw error;
+    }
 
     return { success: true };
   }

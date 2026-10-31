@@ -17,16 +17,3 @@ export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
     return user || null;
   }
 }
-
-// @Injectable()
-// export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
-//   handleRequest<TUser = User | null>(
-//     err: unknown,
-//     user: TUser | null,
-//     info: unknown,
-//   ) {
-//     // Если токена нет или пользователь не авторизован —
-//     // не бросаем ошибку
-//     return user || null;
-//   }
-// }

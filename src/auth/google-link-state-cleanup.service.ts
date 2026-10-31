@@ -11,17 +11,13 @@ export class GoogleLinkStateCleanupService {
   @Cron(CronExpression.EVERY_HOUR)
   async cleanupExpiredStates(): Promise<void> {
     try {
-      const result = await this.prisma.googleLinkState.deleteMany({
+      await this.prisma.googleLinkState.deleteMany({
         where: {
           expiresAt: {
             lt: new Date(),
           },
         },
       });
-
-      if (result.count > 0) {
-        this.logger.log(`Deleted ${result.count} expired Google link states`);
-      }
     } catch (error) {
       this.logger.error(
         'Failed to clean up expired Google link states',

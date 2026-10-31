@@ -44,9 +44,6 @@ export class OrdersController {
     @CurrentUser() user: Express.User,
     @GuestSession() guestSessionId: string | undefined,
   ) {
-    console.log({
-      u: user?.userId, gu: guestSessionId,
-    })
     return this.ordersService.findAllOrders(user?.userId, guestSessionId);
   }
 

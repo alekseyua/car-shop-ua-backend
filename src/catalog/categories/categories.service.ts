@@ -65,7 +65,6 @@ export class CategoryService {
         fromParser.length,
       );
     } else {
-      // console.log({ catalogDb });
       return createRequestPagination(catalogDb, page, limit, totalDb);
     }
   }

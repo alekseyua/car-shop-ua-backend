@@ -20,6 +20,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { OptionalJwtAuthGuard } from './guards/optional-jwt-auth.guard';
+import { clearCookiesGuestSession } from 'src/shared/common/helpers/auth.helper';
 
 @Controller('auth')
 export class AuthController {
@@ -94,14 +95,7 @@ export class AuthController {
   ) {
     const result = await this.authService.login(dto);
     this.setRefreshCookie(res, result.refreshToken);
-    res.clearCookie('guest_session_id', {
-      httpOnly: true,
-      //       // secure: process.env.NODE_ENV === 'production',
-      secure: true,
-      // // sameSite: 'lax',
-      sameSite: 'none',
-      // path: '/auth',
-    });
+    // clearCookiesGuestSession(res);
     const { refreshToken, ...response } = result;
     return response;
   }
@@ -142,16 +136,16 @@ export class AuthController {
     description: 'User successfully logged out',
   })
   async logout(
-    // @Body('userId') userId: number,
     @CurrentUser() user: Express.User | undefined,
     @Res({ passthrough: true }) res: Response,
   ) {
-    if (!user) {
-      throw new UnauthorizedException('Authentication required');
+    if (user) {
+      await this.authService.logout(user.userId);
     }
-    const response = await this.authService.logout(user.userId);
+
     this.clearRefreshCookie(res);
-    return response;
+
+    return { success: true };
   }
 
   @Get('google')
@@ -172,6 +166,7 @@ export class AuthController {
 
     const result = await this.authService.googleLogin(profile);
     this.setRefreshCookie(res, result.refreshToken);
+    // clearCookiesGuestSession(res);
 
     // return res.redirect(
     //   `${this.configService.getOrThrow('FRONTEND_URL')}`, ///auth/google/success
@@ -200,6 +195,7 @@ export class AuthController {
     }
 
     await this.authService.completeGoogleLink(code, state);
+    // clearCookiesGuestSession(res);
 
     const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
 

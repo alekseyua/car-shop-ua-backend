@@ -11,7 +11,7 @@ import { GoogleLinkStateCleanupService } from './google-link-state-cleanup.servi
 @Module({
   imports: [
     JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'carShopSecretKey',
+      secret: process.env.JWT_SECRET,
       signOptions: {
         expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES),
       },

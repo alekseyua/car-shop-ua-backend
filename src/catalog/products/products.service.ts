@@ -32,7 +32,6 @@ export class ProductsService {
         `${typeId}-${groupId}-products`,
       );
       if (cacheProductsStr) {
-        console.log('Products from cache');
         const cacheProductsObj: ResponseParserProductDto[] | null = JSON.parse(
           cacheProductsStr,
         ) as ResponseParserProductDto[];
@@ -41,12 +40,6 @@ export class ProductsService {
           cacheProductsObj.map(async (item: ProductItem) => {
             const dataFromPriceCacheObj: productCachePriceDto | null =
               await getProductFromPrice(item.itemNo, this.redis);
-            console.log({
-              item,
-              itemStock: item.stock,
-              dataFromPriceCacheObj,
-              stock: dataFromPriceCacheObj?.stock.Stock,
-            });
             return normalizeResponseProductItem(item, dataFromPriceCacheObj);
           }),
         );
@@ -68,14 +61,11 @@ export class ProductsService {
           JSON.stringify(getProduct),
         );
       }
-      console.log('Products from autotechnics');
-
       return products;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw error;
     }
-    //getProduct
   }
 
   // getItemDetails
@@ -138,7 +128,7 @@ export class ProductsService {
       };
       return res;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw error;
     }
   }
@@ -148,7 +138,6 @@ export class ProductsService {
     try {
       const cacheTopProductsStr = await this.redis.get('top-products');
       if (cacheTopProductsStr) {
-        console.log('Top products from cache');
         const cacheTopProducts: ResponseParserProductDto[] | null = JSON.parse(
           cacheTopProductsStr,
         ) as ResponseParserProductDto[];
@@ -180,11 +169,9 @@ export class ProductsService {
           return normalizeResponseProductItem(item, dataFromPriceCacheObj);
         }),
       );
-      console.log('Top products from autotechnics');
-
       return serializeTopProducts;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       throw error;
     }
   }

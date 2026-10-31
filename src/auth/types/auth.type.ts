@@ -18,4 +18,14 @@ export interface JwtUser {
   email: string;
 }
 
-export type AuthenticatedUser = JwtUser | GoogleProfile;
+// export type AuthenticatedUser = JwtUser | GoogleProfile;
+export interface AuthenticatedUser {
+  userId: number;
+  email: string;
+
+  googleId?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  avatarUrl?: string | null;
+  emailVerified?: boolean;
+}

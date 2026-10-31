@@ -33,7 +33,6 @@ export class GarageCarService {
     });
 
     if (!garage) {
-      console.log('Garage not found');
       return await this.prisma.garage.create({
         data: {
           name: 'My garage',
@@ -49,8 +48,6 @@ export class GarageCarService {
   async create(userId: number, dto: CreateGarageCarDto) {
     const garage = await this.getGarage(userId);
     const garageId = dto?.garageId ?? garage?.id;
-    // console.log({ garage, dto, garageId })
-    // const carGarage = await this.getCarGarage(userId, garageId);
     if (!(garage || dto?.garageId)) {
       throw new NotFoundException('Garage and Garage-Car not found');
     }
@@ -64,7 +61,6 @@ export class GarageCarService {
     if (!modification) {
       throw new NotFoundException('Modification not found');
     }
-    console.log('CREATE');
     return this.prisma.garageCar.create({
       data: {
         garageId: garageId,

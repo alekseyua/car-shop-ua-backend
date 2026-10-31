@@ -47,7 +47,6 @@ export class PaymentsController {
     @GuestSession() guestSessionId: string | undefined,
     @Body() dto: CreatePaymentDto,
   ) {
-    console.log(user, guestSessionId);
     return this.paymentsService.createCheckout({
       orderId: dto.orderId,
       userId: user?.userId,
@@ -55,36 +54,13 @@ export class PaymentsController {
     });
   }
 
-  // @Post('webhook')
-  // @HttpCode(200)
-  // webhook(@Body() body: { data?: string; signature?: string }) {
-  //   if (typeof body?.data !== 'string' || typeof body?.signature !== 'string') {
-  //     throw new BadRequestException('Invalid webhook body');
-  //   }
-
-  //   return this.paymentsService.handleWebhook(body.data, body.signature);
-  // }
   @Post('webhook')
   @HttpCode(200)
   webhook(@Body() body: { data?: string; signature?: string }) {
-    this.logger.log('========== LIQPAY WEBHOOK RECEIVED ==========');
-
-    this.logger.log(
-      JSON.stringify({
-        receivedAt: new Date().toISOString(),
-        hasBody: !!body,
-        dataType: typeof body?.data,
-        dataLength: body?.data?.length,
-        hasSignature: typeof body?.signature === 'string',
-        signatureLength: body?.signature?.length,
-      }),
-    );
-
     if (typeof body?.data !== 'string' || typeof body?.signature !== 'string') {
       this.logger.error('LiqPay webhook: invalid request body');
       throw new BadRequestException('Invalid webhook body');
     }
-    // return 'ok work '
     return this.paymentsService.handleWebhook(body.data, body.signature);
   }
 

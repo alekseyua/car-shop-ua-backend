@@ -32,48 +32,6 @@ export class NovaposhtaService implements OnModuleInit {
 
   async onModuleInit() {
     // временно останавливаем доделаем позже
-    console.time('novapochta-cities');
-    // const responseCount = await this.customFetch({
-    //     apiKey: this.apiKey,
-    //     modelName: 'AddressGeneral',
-    //     calledMethod: 'getCities',
-    //     methodProperties: {
-    //       Limit : "1"
-    //     },
-    //   });
-    // const res: responseDataCyties = await responseCount.json();
-    // const totalEl = res.info.totalCount;
-    // console.log({totalEl})
-    // const countPage = Math.ceil(totalEl/1000);
-    // const batchSize = 2;
-    // for (let i = 1; i <= countPage; i += batchSize) {
-    //   const batch: Promise<Response>[] = [];
-
-    //   for (
-    //     let page = i;
-    //     page < i + batchSize && page <= countPage;
-    //     page++
-    //   ) {
-    //     batch.push(
-    //       this.customFetch({
-    //         apiKey: this.apiKey,
-    //         modelName: 'AddressGeneral',
-    //         calledMethod: 'getCities',
-    //         methodProperties: {
-    //           Limit: 1000,
-    //           Page: String(page),
-    //         },
-    //       }),
-    //     );
-    //   }
-
-    //   const responses = await Promise.all(batch);
-    //   for (let a of responses){
-    //     this.cities.push(...(await a.json()).data)
-    //   }
-    //   console.log(`processed pages ${i}-${i + batch.length - 1}`);
-    // }
-    console.timeEnd('novapochta-cities');
   }
 
   async getAries() {

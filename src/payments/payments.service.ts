@@ -29,7 +29,6 @@ export class PaymentsService {
     guestSessionId?: string;
   }) {
     const { orderId, userId, guestSessionId } = params;
-    this.logger.log(`POST checkout requested: orderId=${orderId}`);
     // Должен быть установлен ровно один способ владения заказом.
     if (
       (userId == null && !guestSessionId) ||
@@ -70,8 +69,6 @@ export class PaymentsService {
     }
 
     const providerOrderId = `liqpay_${randomUUID()}`;
-    console.log({ providerOrderId, userId, ownsOrder });
-
     const payment = await this.prisma.payment.create({
       data: {
         orderId: order.id,
@@ -105,8 +102,6 @@ export class PaymentsService {
     guestSessionId?: string;
   }) {
     const { paymentId, userId, guestSessionId } = params;
-    this.logger.log(`GET checkout requested: paymentId=${paymentId}`);
-
     if (
       (userId == null && !guestSessionId) ||
       (userId != null && !!guestSessionId)
@@ -157,7 +152,6 @@ export class PaymentsService {
   }
 
   async handleWebhook(data: string, signature: string) {
-this.logger.log('-----------------------handleWebhook start-------------------------');
     const signatureValid = this.liqpay.verifySignature(data, signature);
 
     if (!signatureValid) {
@@ -167,30 +161,10 @@ this.logger.log('-----------------------handleWebhook start---------------------
     }
 
     const payload = this.liqpay.decodeCallback(data);
-
-    this.logger.log('========== LIQPAY CALLBACK DATA ==========');
-
-    this.logger.log(` ========== LIQPAY CALLBACK DATA ==========
-      ${JSON.stringify({
-        status: payload.status,
-        order_id: payload.order_id,
-        amount: payload.amount,
-        currency: payload.currency,
-        public_key_valid: this.liqpay.isPublicKeyValid(payload.public_key),
-        action: payload.action,
-        type: payload.type,
-        payment_id: payload.payment_id,
-        err_code: payload.err_code,
-        err_description: payload.err_description,
-      })}`);
-
     const providerOrderId = payload.order_id;
     const status = payload.status;
     const amount = payload.amount;
     const currency = payload.currency;
-this.logger.log(
-  `LiqPay status received: ${status}; orderId=${providerOrderId}`,
-);
     if (
       typeof providerOrderId !== 'string' ||
       typeof status !== 'string' ||
@@ -227,15 +201,6 @@ this.logger.log(
     const sandboxEnabled = this.config.get<string>('LIQPAY_SANDBOX') === 'true';
     const isSuccessful =
       status === 'success' || (status === 'sandbox' && sandboxEnabled);
-    this.logger.log(
-      `Payment decision: ${JSON.stringify({
-        providerOrderId,
-        status,
-        sandboxEnabled,
-        isSuccessful,
-      })}`,
-    );
-
     if (!isSuccessful) {
       if (status === 'failure' || status === 'error') {
         const failedPayment = await this.prisma.payment.updateMany({

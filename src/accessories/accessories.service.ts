@@ -30,7 +30,6 @@ export class AccessoriesService {
   async getMenuAccessories() {
     const cacheAccessories: string | null = await this.redis.get('accessories');
     if (cacheAccessories) {
-      console.log('Data get from cache');
       const leadToTheObject = JSON.parse(
         cacheAccessories,
       ) as AccessoryCategoryDto[];
@@ -38,7 +37,6 @@ export class AccessoriesService {
     }
     const accessoriesParser: AccessoryCategoryDto[] =
       await this.parser.getMenuAccessories();
-    // console.log(accessoriesParser[0].childElements[0].childElements);
     if (!accessoriesParser) {
       throw new Error('Field parsing data');
     }
@@ -50,34 +48,17 @@ export class AccessoriesService {
     dto: QueryCatalogAccessoriesDto,
   ): Promise<PaginationResponse<ResponseProductAccessoriesDto>> {
     const { id, page, limit } = dto;
-
-    const timerStart = performance.now();
-
     const { skip, take } = buildPagination(page, limit);
-
     const cacheKey = `accessories-catalog-${id}`;
-
     let catalog: ProductAccessoriesDto[];
-
     // 1. MEMORY CACHE
     const memoryData = this.memoryCache.get(cacheKey);
 
     if (memoryData) {
-      console.log(
-        `[CACHE] memory hit: ${(performance.now() - timerStart).toFixed(2)} ms`,
-      );
-
       catalog = memoryData;
     } else {
       // 2. REDIS CACHE
-      const redisStart = performance.now();
-
       const cacheCatalogAccessories = await this.redis.get(cacheKey);
-
-      console.log(
-        `[CACHE] redis get: ${(performance.now() - redisStart).toFixed(2)} ms`,
-      );
-
       if (cacheCatalogAccessories) {
         catalog = JSON.parse(
           cacheCatalogAccessories,
@@ -85,22 +66,9 @@ export class AccessoriesService {
 
         // сохраняем в память
         this.memoryCache.set(cacheKey, catalog);
-
-        console.log(
-          `[CACHE] redis hit + memory set: ${(
-            performance.now() - timerStart
-          ).toFixed(2)} ms`,
-        );
       } else {
         // 3. EXTERNAL API
-        const parserStart = performance.now();
-
         catalog = await this.parser.getCatalogAccessories(id);
-
-        console.log(
-          `[CACHE] parser: ${(performance.now() - parserStart).toFixed(2)} ms`,
-        );
-
         if (!catalog) {
           throw new Error('Field parsing data');
         }

@@ -64,8 +64,6 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
   // -----------------------------------
 
   private async login() {
-    console.log('START LOGIN...');
-
     const response = await this.request.post('/api/user/login', {
       data: {
         comId: 15,
@@ -85,8 +83,6 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     }
 
     this.token = data.token;
-
-    console.log('LOGIN SUCCESS');
   }
 
   // -----------------------------------
@@ -133,8 +129,6 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
 
     // token expired
     if (response.status() === 401) {
-      console.log('TOKEN EXPIRED → RELOGIN');
-
       await this.login();
       response = await this.request.post(url, {
         ...options,
@@ -155,8 +149,6 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     this.token = null;
 
     await this.login();
-
-    console.log('AUTH RESET SUCCESS');
   }
   // -----------------------------------
   // GET CATALOG
@@ -185,8 +177,6 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
     const response = await this.authorizedPost(
       `/api/Car/CatalogItems/?typeId=${typeId}&groupId=${groupId}`,
     );
-
-    console.log('STATUS:', response.status());
 
     if (!response.ok()) {
       throw new Error(`Items error: ${response.status()}`);
@@ -321,12 +311,6 @@ export class ParserService implements OnModuleInit, OnModuleDestroy {
           'Content-Type': 'application/json',
         },
       });
-
-      const elapsed = performance.now() - start;
-
-      console.log(
-        `[getCatalogAccessories] id=${id}, status=${response.status()}, time=${elapsed.toFixed(2)} ms`,
-      );
 
       if (!response.ok()) {
         throw new Error(`Catalog accessories error: ${response.status()}`);

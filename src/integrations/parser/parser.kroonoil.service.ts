@@ -43,7 +43,6 @@ export class ParserServiceKroonOil implements OnModuleInit, OnModuleDestroy {
         ':authority': 'www.kroon-oil.com',
       },
     });
-    console.log('ParserServiceKroonOil initialized');
   }
 
   // -----------------------------------
@@ -72,26 +71,6 @@ export class ParserServiceKroonOil implements OnModuleInit, OnModuleDestroy {
     } catch {
       // Попап отсутствует — продолжаем работу.
     }
-    // const acceptButton = page.locator('#cookie_popup_acceptButton');
-
-    // try {
-    //   // Popup может отсутствовать, если согласие уже сохранено.
-    //   console.log('start check open modal popap cookies');
-    //   if (!(await popup.isVisible().catch(() => false))) {
-    //     console.log('[Kroon] Cookie popup not visible');
-    //     return;
-    //   }
-    //   console.log('start click');
-    //   await acceptButton.click({
-    //     timeout: 500,
-    //   });
-    //   console.log('[Kroon] Cookies accepted successfully');
-    // } catch (error) {
-    //   console.warn(
-    //     '[Kroon] Cookie popup handling issue:',
-    //     error instanceof Error ? error.message : error,
-    //   );
-    // }
   }
 
   private isCloudflareChallenge(html: string): boolean {
@@ -380,185 +359,24 @@ export class ParserServiceKroonOil implements OnModuleInit, OnModuleDestroy {
 
     return run;
   }
-  // private async kroonSmartSearchInternal(
-  //   query: string,
-  // ): Promise<KroonSmartSearchResponseDto> {
-  //   const page = await this.kroonContext.newPage();
-
-  //   try {
-  //     console.log('[Kroon] Open page');
-
-  //     const pageResponse = await page.goto(
-  //       'https://www.kroon-oil.com/en/int/',
-  //       {
-  //         waitUntil: 'domcontentloaded',
-  //       },
-  //     );
-  //     console.log('start hide cookies');
-  //     await this.handleKroonCookies(page);
-  //     console.log('end hide cookies');
-  //     const html = await page.content();
-
-  //     if (this.isCloudflareChallenge(html)) {
-  //       throw new Error(
-  //         'Kroon Cloudflare challenge detected on smart search page',
-  //       );
-  //     }
-  //     const status = pageResponse?.status() ?? 0;
-  //     console.log('[Kroon] Page status:', status);
-  //     if (status === 403) {
-  //       const headers = await pageResponse?.allHeaders();
-  //       const body = await page
-  //         .locator('body')
-  //         .innerText()
-  //         .catch(() => '');
-
-  //       console.error('[Kroon] Initial page response', {
-  //         status,
-  //         url: pageResponse?.url(),
-  //         contentType: headers?.['content-type'],
-  //         server: headers?.server,
-  //         cfRay: headers?.['cf-ray'],
-  //         bodyPreview: body.slice(0, 500),
-  //       });
-  //     }
-  //     if (!pageResponse?.ok()) {
-  //       throw new Error(`Kroon page error: ${pageResponse?.status()}`);
-  //     }
-
-  //     // Ждём, чтобы Cloudflare / cookies успели установиться
-  //     // await page.waitForTimeout(500);
-
-  //     const csrfToken = await page.evaluate(() => {
-  //       return (
-  //         document.querySelector<HTMLInputElement>(
-  //           'input[name="csrfmiddlewaretoken"]',
-  //         )?.value ?? null
-  //       );
-  //     });
-
-  //     console.log('[Kroon] CSRF:', csrfToken ? 'FOUND' : 'NOT FOUND');
-
-  //     if (!csrfToken) {
-  //       throw new Error('Kroon CSRF token not found');
-  //     }
-
-  //     const result = await page.evaluate(
-  //       async ({ query, csrfToken }) => {
-  //         const body = new URLSearchParams();
-
-  //         body.append('query', query);
-  //         body.append('csrfmiddlewaretoken', csrfToken);
-
-  //         const response = await fetch('/en/int/api/smart_search/', {
-  //           method: 'POST',
-
-  //           headers: {
-  //             'X-Requested-With': 'XMLHttpRequest',
-  //           },
-
-  //           body,
-  //         });
-
-  //         return {
-  //           status: response.status,
-  //           url: response.url,
-  //           redirected: response.redirected,
-  //           contentType: response.headers.get('content-type'),
-  //           server: response.headers.get('server'),
-  //           headers: Object.fromEntries(response.headers.entries()),
-  //           text: await response.text(),
-  //         };
-  //       },
-  //       {
-  //         query,
-  //         csrfToken,
-  //       },
-  //     );
-
-  //     console.log('[Kroon] Response diagnostics', {
-  //       status: result.status,
-  //       url: (result as any).url,
-  //       contentType: result.contentType,
-  //       cfRay: (result as any).cfRay,
-  //     });
-  //     if (this.isCloudflareChallenge(result.text)) {
-  //       console.error('[Kroon] Cloudflare challenge returned by smart_search', {
-  //         status: result.status,
-  //         contentType: result.contentType,
-  //         query,
-  //       });
-
-  //       throw new Error('Kroon smart search blocked by Cloudflare');
-  //     }
-
-  //     if (result.status !== 200) {
-  //       throw new Error(`Kroon smart search error: ${result.status}`);
-  //     }
-
-  //     // if (result.status !== 200) {
-  //     //   console.warn('[Kroon] Smart search failed', {
-  //     //     status: result.status,
-  //     //     query,
-  //     //     contentType: result.contentType,
-  //     //     bodyPreview: result.text.slice(0, 3000),
-  //     //   });
-  //     //   throw new Error(`Kroon smart search error: ${result.status}`);
-  //     // }
-
-  //     return this.parseKroonSmartSearch(result.text);
-  //   } finally {
-  //     await page.close();
-  //   }
-  // }
   private async kroonSmartSearchInternal(
     query: string,
   ): Promise<KroonSmartSearchResponseDto> {
     const page = await this.kroonContext.newPage();
 
     try {
-      console.log('[Kroon] Open page');
-
       const pageResponse = await page.goto(
         'https://www.kroon-oil.com/en/int/',
         { waitUntil: 'domcontentloaded' },
       );
-      console.log('start hide popup');
       await this.handleKroonCookies(page);
-      console.log('end hide popup');
-
-      console.log('start cloudflare ');
       if (this.isCloudflareChallenge(await page.content())) {
         throw new Error('Kroon Cloudflare challenge detected');
       }
-      console.log('end cloudflare');
-
       if (!pageResponse?.ok()) {
         throw new Error(`Kroon page error: ${pageResponse?.status()}`);
       }
 
-      // Логируем запросы, которые выполняет сама форма.
-      // const requests: Array<{
-      //   method: string;
-      //   url: string;
-      //   postData: string | null;
-      // }> = [];
-
-      // page.on('request', (request) => {
-      //   if (request.method() !== 'GET') {
-      //     requests.push({
-      //       method: request.method(),
-      //       url: request.url(),
-      //       postData: request.postData(),
-      //     });
-
-      //     console.log('[Kroon] Request', {
-      //       method: request.method(),
-      //       url: request.url(),
-      //       postData: request.postData(),
-      //     });
-      //   }
-      // });
       await page.waitForTimeout(1000);
 
       // Имитируем пользователя.
@@ -569,13 +387,6 @@ export class ParserServiceKroonOil implements OnModuleInit, OnModuleDestroy {
       // Отправляем форму настоящим кликом.
       await page.locator('#licence_submit_button').click();
 
-      // Ждём завершения возможного AJAX-запроса.
-      // await page
-      //   .waitForLoadState('networkidle', {
-      //     timeout: 10_000,
-      //   })
-      //   .catch(() => {});
-
       // Даём странице обновить DOM после AJAX.
       await page.locator('.search-results-inner .search-item').first().waitFor({
         state: 'visible',
@@ -583,18 +394,7 @@ export class ParserServiceKroonOil implements OnModuleInit, OnModuleDestroy {
       });
 
       const resultHtml = await page.content();
-      // const bodyText = await page
-      //   .locator('body')
-      //   .innerText()
-      //   .catch(() => '');
-
-      // console.log('[Kroon] Form completed', {
-      //   url: page.url(),
-      //   title: await page.title(),
-      //   requests,
-      //   bodyPreview: bodyText.slice(0, 3000),
-      // });
-
+  
       if (this.isCloudflareChallenge(resultHtml)) {
         throw new Error('Kroon form blocked by Cloudflare');
       }
@@ -615,16 +415,9 @@ export class ParserServiceKroonOil implements OnModuleInit, OnModuleDestroy {
     const id = this.extractKroonId(url);
 
     try {
-      console.log('[Kroon] Open recommendation page:', fullUrl);
-
-      console.log('[Kroon] Recommendation ID:', id);
-
       const response = await page.goto(fullUrl, {
         waitUntil: 'domcontentloaded',
       });
-
-      console.log('[Kroon] Recommendation status:', response?.status());
-
       if (!response?.ok()) {
         throw new Error(
           `Kroon recommendation page error: ${response?.status()}`,

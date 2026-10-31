@@ -14,11 +14,11 @@ export class OemService {
   ) {}
   async create(createOemByItemDto: CreateOemByItemDto[]) {
     await this.prisma.listOEMByItem.createMany({
-      data: createOemByItemDto.map((item)=>({
+      data: createOemByItemDto.map((item) => ({
         ...item,
         itemNo: normalizeString(item.itemNo),
-      }))
-    })
+      })),
+    });
     return 'This action adds a new oemByItem';
   }
 
@@ -31,30 +31,22 @@ export class OemService {
       const oemByItems = await this.prisma.listOEMByItem.findMany({
         where: {
           itemNo: normalizeString(id),
-        }
-      })
-      if(oemByItems.length > 0) {
-        console.log('from base')
+        },
+      });
+      if (oemByItems.length > 0) {
         return oemByItems;
-      }else{
-
-        const resParser: ResponseOemByItemDto[] = await this.parser.getListItemOem((id));
-        if(resParser.length > 0) {
+      } else {
+        const resParser: ResponseOemByItemDto[] =
+          await this.parser.getListItemOem(id);
+        if (resParser.length > 0) {
           await this.create(resParser);
         }
-        console.log('from resParser');
         return resParser;
       }
     } catch (error: Error | any) {
-      throw new Error(`Failed to find oem by item with ID ${id}: ${error.message}`);
+      throw new Error(
+        `Failed to find oem by item with ID ${id}: ${error.message}`,
+      );
     }
   }
-
-  // update(id: number, updateOemByItemDto: UpdateOemByItemDto) {
-  //   return `This action updates a #${id} oemByItem`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} oemByItem`;
-  // }
 }

@@ -1,8 +1,8 @@
-// src/types/express.d.ts
+// // src/types/express.d.ts
 
-declare namespace Express {
-    export interface User {
-        userId: number;
-        email: string;
-    }
-}
+// declare namespace Express {
+//   export interface User {
+//     userId: number;
+//     email: string;
+//   }
+// }

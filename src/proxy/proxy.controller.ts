@@ -11,9 +11,6 @@ export class ProxyController {
   async pdf(@Query() dto: QueryPdfRequest, @Res() res: Response) {
     const { buffer, contentType } = await this.proxyService.getPdf(dto);
 
-    console.log('PDF size:', buffer.length);
-    console.log('Content type:', contentType);
-
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Length', buffer.length);
     res.setHeader('Content-Disposition', 'inline; filename="document.pdf"');

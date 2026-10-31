@@ -77,6 +77,10 @@ export class IoredisService {
     return this.redis.call(command, ...args);
   }
 
+  async setWithExpire(key: string, value: string, ttl: number): Promise<void> {
+    await this.redis.set(key, value, 'EX', ttl);
+  }
+
   async savePriceRedisPipeline(data: ExcelJs.CellValue[][]) {
     const batchSize = 1000;
     const city_1 = cellToString(data[0]?.[10]);
@@ -115,7 +119,6 @@ export class IoredisService {
       }
       await pipeline.exec();
     }
-    console.log('save complate');
   }
 
   async search(index: string, query: string, limit = 20, offset = 0) {
